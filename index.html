@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#2563eb"
+    >
+    <link rel="icon" type="image/png" href="voting-box.png">
+
+    <title>E-Voting RW 04</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     LOADING
+===================================================== -->
+
+<div
+    id="loading"
+    class="loading-overlay hidden"
+>
+
+    <div class="loading-box">
+
+        <div class="loading-spinner"></div>
+
+        <p id="loadingText">
+            Memproses...
+        </p>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     APP
+===================================================== -->
+
+<div class="app">
+
+
+    <!-- =================================================
+         HEADER
+    ================================================== -->
+
+    <header class="app-header">
+
+        <div class="header-inner">
+
+            <div class="brand">
+
+                <div class="brand-icon">
+                    🗳️
+                </div>
+
+                <div>
+
+                    <h1>
+                        E-Voting RW 04
+                    </h1>
+
+                    <p>
+                        Pemilihan Ketua RW
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="header-actions">
+
+                <div
+                    id="sessionTimer"
+                    class="session-badge"
+                >
+                    Session
+                </div>
+
+                <button
+                    type="button"
+                    id="logoutButton"
+                    class="button button-logout hidden"
+                >
+                    Keluar
+                </button>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =================================================
+         MAIN
+    ================================================== -->
+
+    <main class="main-container">
+
+
+        <!-- =================================================
+             LOGIN PAGE
+        ================================================== -->
+
+        <section
+            id="loginPage"
+            class="page"
+        >
+
+            <div class="login-wrapper">
+
+                <div class="login-card">
+
+
+                    <div class="login-icon">
+                        🗳️
+                    </div>
+
+
+                    <h2>
+                        E-Voting RW 04
+                    </h2>
+
+
+                    <p class="login-description">
+                        Silakan masuk menggunakan
+                        ID Pemilih dan PIN Anda.
+                    </p>
+
+
+                    <div
+                        id="loginMessage"
+                        class="message"
+                    ></div>
+
+
+                    <form id="loginForm">
+
+
+                        <div class="form-group">
+
+                            <label for="idPemilih">
+                                ID Pemilih
+                            </label>
+
+                            <input
+                                type="text"
+                                id="idPemilih"
+                                name="idPemilih"
+                                placeholder="Contoh: RW04-001"
+                                autocomplete="username"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="pin">
+                                PIN
+                            </label>
+
+                            <input
+                                type="password"
+                                id="pin"
+                                name="pin"
+                                placeholder="Masukkan PIN"
+                                autocomplete="current-password"
+                                inputmode="numeric"
+                                required
+                            >
+
+                        </div>
+
+
+                        <button
+                            type="submit"
+                            id="loginButton"
+                            class="button button-primary button-large"
+                        >
+                            Masuk ke Pemilihan
+                            <span>→</span>
+                        </button>
+
+
+                    </form>
+
+
+                    <div class="security-note">
+
+                        <span>🔒</span>
+
+                        <span>
+                            Pilihan Anda bersifat rahasia
+                            dan hanya dapat digunakan satu kali.
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             VOTING PAGE
+        ================================================== -->
+
+        <section
+            id="votingPage"
+            class="page hidden"
+        >
+
+
+            <!-- USER INFO -->
+
+            <div class="welcome-card">
+
+                <div>
+
+                    <span class="section-label">
+                        SELAMAT DATANG
+                    </span>
+
+                    <h2>
+                        Halo,
+                        <span id="userName">
+                            -
+                        </span>
+                    </h2>
+
+                    <p>
+                        Silakan pilih satu calon
+                        untuk memberikan suara Anda.
+                    </p>
+
+                </div>
+
+
+                <div class="vote-rule">
+
+                    <strong>
+                        1 suara
+                    </strong>
+
+                    <span>
+                        per pemilih
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- WARNING -->
+
+            <div class="warning-card">
+
+                <div class="warning-icon">
+                    ⚠️
+                </div>
+
+                <div>
+
+                    <strong>
+                        Perhatikan pilihan Anda
+                    </strong>
+
+                    <p>
+                        Anda hanya dapat memilih satu calon.
+                        Pastikan pilihan Anda sudah benar
+                        karena suara yang telah dikirim
+                        tidak dapat diubah.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- TITLE -->
+
+            <div class="candidate-heading">
+
+                <div>
+
+                    <span class="section-label">
+                        DAFTAR CALON
+                    </span>
+
+                    <h2>
+                        Siapa pilihan Anda?
+                    </h2>
+
+                </div>
+
+
+                <div class="candidate-count">
+
+                    <strong id="candidateCount">
+                        0
+                    </strong>
+
+                    <span>
+                        calon
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- CANDIDATE GRID -->
+
+            <div
+                id="candidateGrid"
+                class="candidate-grid"
+            >
+
+                <div class="candidate-loading">
+
+                    <div class="candidate-spinner"></div>
+
+                    <span>
+                        Memuat daftar calon...
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- SELECTED INFO -->
+
+            <div
+                id="selectedInfo"
+                class="selected-info hidden"
+            >
+
+                <div class="selected-check">
+                    ✓
+                </div>
+
+                <div class="selected-info-text">
+
+                    <span>
+                        PILIHAN ANDA
+                    </span>
+
+                    <strong id="selectedCandidateName">
+                        -
+                    </strong>
+
+                </div>
+
+                <div
+                    id="selectedCandidateNumber"
+                    class="selected-number"
+                >
+                    00
+                </div>
+
+            </div>
+
+
+
+            <!-- CONFIRM BUTTON -->
+
+            <div class="confirm-area">
+
+                <button
+                    type="button"
+                    id="confirmVoteButton"
+                    class="button button-primary button-large"
+                >
+                    Lanjutkan Konfirmasi
+                    <span>→</span>
+                </button>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             CONFIRM PAGE
+        ================================================== -->
+
+        <section
+            id="confirmPage"
+            class="page hidden"
+        >
+
+            <div class="confirm-wrapper">
+
+                <div class="confirm-card">
+
+
+                    <div class="confirm-icon">
+                        ✓
+                    </div>
+
+
+                    <span class="section-label">
+                        KONFIRMASI PILIHAN
+                    </span>
+
+
+                    <h2>
+                        Pastikan pilihan Anda
+                        sudah benar
+                    </h2>
+
+
+                    <p class="confirm-description">
+                        Setelah suara dikirim,
+                        pilihan tidak dapat diubah.
+                    </p>
+
+
+
+                    <div class="confirmation-candidate">
+
+                        <div
+                            id="confirmationNumber"
+                            class="confirmation-number"
+                        >
+                            00
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Anda memilih
+                            </span>
+
+                            <strong id="confirmationName">
+                                -
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div
+                        id="voteMessage"
+                        class="message"
+                    ></div>
+
+
+
+                    <div class="confirm-actions">
+
+                        <button
+                            type="button"
+                            id="backToVotingButton"
+                            class="button button-secondary"
+                        >
+                            ← Kembali
+                        </button>
+
+
+                        <button
+                            type="button"
+                            id="submitVoteButton"
+                            class="button button-primary"
+                        >
+                            Ya, Kirim Suara
+                            <span>✓</span>
+                        </button>
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             SUCCESS PAGE
+        ================================================== -->
+
+        <section
+            id="successPage"
+            class="page hidden"
+        >
+
+            <div class="success-wrapper">
+
+                <div class="success-card">
+
+
+                    <div class="success-icon">
+                        ✓
+                    </div>
+
+
+                    <span class="section-label">
+                        SUARA BERHASIL
+                    </span>
+
+
+                    <h2>
+                        Terima kasih!
+                    </h2>
+
+
+                    <p>
+                        Suara Anda telah berhasil
+                        dicatat dalam sistem.
+                    </p>
+
+
+                    <div class="vote-receipt">
+
+                        <span>
+                            ID Suara
+                        </span>
+
+                        <strong id="voteId">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        id="viewResultButton"
+                        class="button button-primary button-large"
+                    >
+                        Lihat Hasil
+                        <span>→</span>
+                    </button>
+
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             RESULT PAGE
+        ================================================== -->
+
+        <section
+            id="resultPage"
+            class="page hidden"
+        >
+
+
+            <div class="result-header">
+
+                <div>
+
+                    <span class="section-label">
+                        HASIL PEMILIHAN
+                    </span>
+
+                    <h2>
+                        Perolehan Suara
+                    </h2>
+
+                    <p>
+                        Hasil suara berdasarkan data
+                        yang tercatat dalam sistem.
+                    </p>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="refreshResultButton"
+                    class="button button-secondary"
+                >
+                    ↻ Refresh
+                </button>
+
+            </div>
+
+
+
+            <div
+                id="resultGrid"
+                class="result-grid"
+            ></div>
+
+
+        </section>
+
+
+    </main>
+
+
+
+    <!-- =================================================
+         FOOTER
+    ================================================== -->
+
+    <footer class="app-footer">
+
+        <p>
+            E-Voting RW 04
+        </p>
+
+        <span>
+            Sistem Pemilihan Digital
+        </span>
+
+    </footer>
+
+
+</div>
+
+
+
+<script src="app.js"></script>
+
+</body>
+
+</html>

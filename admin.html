@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+  <link rel="icon" type="image/png" href="voting-box.png">
+  <title>
+    Admin Dashboard - E-Voting RW 04
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="admin.css"
+  >
+
+</head>
+
+
+<body>
+
+
+  <!-- =====================================================
+       LOGIN
+  ====================================================== -->
+
+  <section
+    id="loginPage"
+    class="login-page"
+  >
+
+    <div class="login-container">
+
+
+      <div class="login-brand">
+
+        <div class="brand-icon">
+          🗳️
+        </div>
+
+        <h1>
+          E-Voting RW 04
+        </h1>
+
+        <p>
+          Panel Administrator
+        </p>
+
+      </div>
+
+
+      <div class="login-card">
+
+        <h2>
+          Login Administrator
+        </h2>
+
+        <p class="login-description">
+          Masuk untuk mengelola dan memantau pemilihan.
+        </p>
+
+
+        <form id="loginForm">
+
+
+          <div class="form-group">
+
+            <label for="username">
+              Username
+            </label>
+
+            <input
+              type="text"
+              id="username"
+              autocomplete="username"
+              placeholder="Masukkan username"
+              required
+            >
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="password">
+              Password
+            </label>
+
+            <input
+              type="password"
+              id="password"
+              autocomplete="current-password"
+              placeholder="Masukkan password"
+              required
+            >
+
+          </div>
+
+
+          <div
+            id="loginMessage"
+            class="message"
+          ></div>
+
+
+          <button
+            type="submit"
+            id="loginButton"
+            class="btn btn-primary btn-full"
+          >
+            Login Admin
+          </button>
+
+
+        </form>
+
+      </div>
+
+
+      <div class="login-footer">
+
+        E-Voting Pemuda/Pemudi RW 04
+        • 2026
+
+      </div>
+
+
+    </div>
+
+  </section>
+
+
+
+  <!-- =====================================================
+       DASHBOARD APPLICATION
+  ====================================================== -->
+
+  <section
+    id="dashboardPage"
+    class="dashboard-page hidden"
+  >
+
+
+    <!-- =================================================
+         MOBILE HEADER
+    ================================================== -->
+
+    <header class="mobile-header">
+
+
+      <button
+        id="sidebarToggle"
+        class="sidebar-toggle"
+        type="button"
+        aria-label="Buka menu"
+      >
+        ☰
+      </button>
+
+
+      <div class="mobile-title">
+
+        Admin RW 04
+
+      </div>
+
+
+      <button
+        id="mobileRefreshButton"
+        class="mobile-refresh"
+        type="button"
+        aria-label="Refresh"
+      >
+        ↻
+      </button>
+
+
+    </header>
+
+
+
+    <!-- =================================================
+         SIDEBAR
+    ================================================== -->
+
+    <aside
+      id="sidebar"
+      class="sidebar"
+    >
+
+
+      <div class="sidebar-brand">
+
+
+        <div class="sidebar-logo">
+          🗳️
+        </div>
+
+
+        <div>
+
+          <strong>
+            E-Voting RW 04
+          </strong>
+
+          <small>
+            Administrator
+          </small>
+
+        </div>
+
+
+      </div>
+
+
+
+      <nav class="sidebar-nav">
+
+
+        <button
+          class="nav-item active"
+          data-section="overview"
+          type="button"
+        >
+
+          <span>
+            📊
+          </span>
+
+          <span>
+            Dashboard
+          </span>
+
+        </button>
+
+
+
+        <button
+          class="nav-item"
+          data-section="voters"
+          type="button"
+        >
+
+          <span>
+            👥
+          </span>
+
+          <span>
+            Data Pemilih
+          </span>
+
+        </button>
+
+
+
+        <button
+          class="nav-item"
+          data-section="results"
+          type="button"
+        >
+
+          <span>
+            🏆
+          </span>
+
+          <span>
+            Hasil & Ranking
+          </span>
+
+        </button>
+
+
+
+        <button
+          class="nav-item"
+          data-section="logs"
+          type="button"
+        >
+
+          <span>
+            📋
+          </span>
+
+          <span>
+            Log Aktivitas
+          </span>
+
+        </button>
+
+
+
+        <button
+          class="nav-item"
+          data-section="settings"
+          type="button"
+        >
+
+          <span>
+            ⚙️
+          </span>
+
+          <span>
+            Pengaturan
+          </span>
+
+        </button>
+
+
+      </nav>
+
+
+
+      <div class="sidebar-bottom">
+
+
+        <div class="admin-profile">
+
+
+          <div class="admin-avatar">
+            A
+          </div>
+
+
+          <div class="admin-info">
+
+            <strong>
+              Administrator
+            </strong>
+
+            <small>
+              Admin
+            </small>
+
+          </div>
+
+
+        </div>
+
+
+
+        <button
+          id="logoutButton"
+          class="logout-button"
+          type="button"
+        >
+
+          🚪 Keluar
+
+        </button>
+
+
+      </div>
+
+
+    </aside>
+
+
+
+    <!-- MOBILE OVERLAY -->
+
+    <div
+      id="sidebarOverlay"
+      class="sidebar-overlay"
+    ></div>
+
+
+
+    <!-- =================================================
+         MAIN CONTENT
+    ================================================== -->
+
+    <main class="main-content">
+
+
+      <!-- =================================================
+           DASHBOARD
+      ================================================== -->
+
+      <section
+        id="section-overview"
+        class="content-section active-section"
+      >
+
+
+        <!-- PAGE HEADER -->
+
+        <div class="page-header">
+
+
+          <div>
+
+            <div class="breadcrumb">
+              PANEL ADMINISTRATOR
+            </div>
+
+            <h1>
+              Dashboard
+            </h1>
+
+            <p>
+              Pantau proses pemilihan secara real-time.
+            </p>
+
+          </div>
+
+
+          <button
+            id="refreshButton"
+            class="btn btn-secondary"
+            type="button"
+          >
+
+            ↻
+            <span>
+              Refresh
+            </span>
+
+          </button>
+
+
+        </div>
+
+
+
+        <!-- HERO -->
+
+        <div class="hero-card">
+
+
+          <div class="hero-content">
+
+            <div class="hero-label">
+              PEMILIHAN AKTIF
+            </div>
+
+
+            <h2 id="electionNameHeader">
+
+              Pemilihan Ketua
+              Pemuda/Pemudi RW 04
+
+            </h2>
+
+
+            <p>
+              Pantau proses pemilihan,
+              partisipasi pemilih,
+              dan hasil suara.
+            </p>
+
+          </div>
+
+
+
+          <div class="hero-status">
+
+            <span class="hero-status-label">
+              STATUS
+            </span>
+
+
+            <span
+              id="electionStatus"
+              class="status-badge status-belum"
+            >
+              BELUM_DIMULAI
+            </span>
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- STATISTICS -->
+
+        <div class="stats-grid">
+
+
+          <div class="stat-card">
+
+
+            <div class="stat-icon blue">
+              👥
+            </div>
+
+
+            <div class="stat-content">
+
+              <span class="stat-label">
+                Total Pemilih
+              </span>
+
+
+              <strong
+                id="totalVoters"
+                class="stat-value"
+              >
+                0
+              </strong>
+
+
+              <small>
+                Pemilih terdaftar
+              </small>
+
+            </div>
+
+
+          </div>
+
+
+
+          <div class="stat-card">
+
+
+            <div class="stat-icon green">
+              ✓
+            </div>
+
+
+            <div class="stat-content">
+
+              <span class="stat-label">
+                Sudah Memilih
+              </span>
+
+
+              <strong
+                id="votedVoters"
+                class="stat-value"
+              >
+                0
+              </strong>
+
+
+              <small>
+                Suara masuk
+              </small>
+
+            </div>
+
+
+          </div>
+
+
+
+          <div class="stat-card">
+
+
+            <div class="stat-icon orange">
+              ○
+            </div>
+
+
+            <div class="stat-content">
+
+              <span class="stat-label">
+                Belum Memilih
+              </span>
+
+
+              <strong
+                id="notVotedVoters"
+                class="stat-value"
+              >
+                0
+              </strong>
+
+
+              <small>
+                Masih menunggu
+              </small>
+
+            </div>
+
+
+          </div>
+
+
+
+          <div class="stat-card">
+
+
+            <div class="stat-icon purple">
+              %
+            </div>
+
+
+            <div class="stat-content">
+
+              <span class="stat-label">
+                Partisipasi
+              </span>
+
+
+              <strong
+                id="participation"
+                class="stat-value"
+              >
+                0%
+              </strong>
+
+
+              <small>
+                Tingkat partisipasi
+              </small>
+
+            </div>
+
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- CHART GRID -->
+
+        <div class="dashboard-grid">
+
+
+          <!-- PARTICIPATION -->
+
+          <div class="panel">
+
+
+            <div class="panel-header">
+
+
+              <div>
+
+                <h3>
+                  Partisipasi Pemilih
+                </h3>
+
+                <p>
+                  Perbandingan pemilih
+                  yang sudah dan belum memilih.
+                </p>
+
+              </div>
+
+
+              <button
+                id="refreshDashboardChart"
+                class="icon-button"
+                type="button"
+                title="Refresh"
+              >
+                ↻
+              </button>
+
+
+            </div>
+
+
+
+            <div class="participation-chart">
+
+
+              <div class="donut-wrapper">
+
+
+                <div
+                  id="donutChart"
+                  class="donut-chart"
+                >
+
+
+                  <div class="donut-center">
+
+                    <strong
+                      id="donutPercentage"
+                    >
+                      0%
+                    </strong>
+
+
+                    <span>
+                      Partisipasi
+                    </span>
+
+                  </div>
+
+
+                </div>
+
+
+              </div>
+
+
+
+              <div class="chart-legend">
+
+
+                <div class="legend-item">
+
+                  <span
+                    class="legend-dot voted"
+                  ></span>
+
+
+                  <div>
+
+                    <strong
+                      id="legendVoted"
+                    >
+                      0
+                    </strong>
+
+                    <span>
+                      Sudah memilih
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+
+                <div class="legend-item">
+
+                  <span
+                    class="legend-dot not-voted"
+                  ></span>
+
+
+                  <div>
+
+                    <strong
+                      id="legendNotVoted"
+                    >
+                      0
+                    </strong>
+
+                    <span>
+                      Belum memilih
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+              </div>
+
+
+            </div>
+
+
+          </div>
+
+
+
+          <!-- RANKING -->
+
+          <div class="panel">
+
+
+            <div class="panel-header">
+
+
+              <div>
+
+                <h3>
+                  Ranking Calon
+                </h3>
+
+                <p>
+                  Perolehan suara sementara.
+                </p>
+
+              </div>
+
+
+              <button
+                id="refreshRankingButton"
+                class="icon-button"
+                type="button"
+              >
+                ↻
+              </button>
+
+
+            </div>
+
+
+            <div
+              id="rankingContainer"
+              class="ranking-container"
+            >
+
+              <div class="loading-box">
+                Memuat ranking...
+              </div>
+
+            </div>
+
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- CANDIDATE CHART -->
+
+        <div class="panel">
+
+
+          <div class="panel-header">
+
+
+            <div>
+
+              <h3>
+                Perolehan Suara Calon
+              </h3>
+
+              <p>
+                Distribusi suara berdasarkan calon.
+              </p>
+
+            </div>
+
+
+          </div>
+
+
+          <div
+            id="candidateChart"
+            class="candidate-chart"
+          >
+
+            Memuat grafik...
+
+          </div>
+
+
+        </div>
+
+
+      </section>
+
+
+
+      <!-- =================================================
+           DATA PEMILIH
+      ================================================== -->
+
+      <section
+        id="section-voters"
+        class="content-section"
+      >
+
+
+        <div class="page-header">
+
+
+          <div>
+
+            <div class="breadcrumb">
+              PANEL ADMINISTRATOR
+            </div>
+
+
+            <h1>
+              Data Pemilih
+            </h1>
+
+
+            <p>
+              Daftar pemilih yang terdaftar dalam sistem.
+            </p>
+
+          </div>
+
+
+          <button
+            id="refreshVotersButton"
+            class="btn btn-secondary"
+            type="button"
+          >
+
+            ↻
+            <span>
+              Refresh
+            </span>
+
+          </button>
+
+
+        </div>
+
+
+
+        <div class="privacy-notice">
+
+
+          <span class="privacy-icon">
+            🔒
+          </span>
+
+
+          <div>
+
+            <strong>
+              Privasi Suara
+            </strong>
+
+
+            <span>
+              Dashboard tidak menampilkan hubungan
+              antara identitas pemilih dan calon
+              yang dipilih.
+            </span>
+
+          </div>
+
+
+        </div>
+
+
+
+        <div class="panel table-panel">
+
+
+          <div class="table-wrapper">
+
+
+            <table>
+
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    No
+                  </th>
+
+                  <th>
+                    ID Pemilih
+                  </th>
+
+                  <th>
+                    Nama
+                  </th>
+
+                  <th>
+                    Status
+                  </th>
+
+                  <th>
+                    Waktu Memilih
+                  </th>
+
+                </tr>
+
+              </thead>
+
+
+              <tbody id="votersTableBody">
+
+
+                <tr>
+
+                  <td
+                    colspan="5"
+                    class="loading-cell"
+                  >
+                    Memuat data pemilih...
+                  </td>
+
+                </tr>
+
+
+              </tbody>
+
+
+            </table>
+
+
+          </div>
+
+
+        </div>
+
+
+      </section>
+
+
+
+      <!-- =================================================
+           HASIL & RANKING
+      ================================================== -->
+
+      <section
+        id="section-results"
+        class="content-section"
+      >
+
+
+        <div class="page-header">
+
+
+          <div>
+
+            <div class="breadcrumb">
+              PANEL ADMINISTRATOR
+            </div>
+
+
+            <h1>
+              Hasil & Ranking
+            </h1>
+
+
+            <p>
+              Hasil perolehan suara setiap calon.
+            </p>
+
+          </div>
+
+
+          <button
+            id="refreshResultsButton"
+            class="btn btn-secondary"
+            type="button"
+          >
+
+            ↻
+            <span>
+              Refresh
+            </span>
+
+          </button>
+
+
+        </div>
+
+
+
+        <div
+          id="resultsContainer"
+          class="results-grid"
+        >
+
+
+          <div class="loading-box">
+            Memuat hasil...
+          </div>
+
+
+        </div>
+
+
+      </section>
+
+
+
+      <!-- =================================================
+           LOG AKTIVITAS
+      ================================================== -->
+
+      <section
+        id="section-logs"
+        class="content-section"
+      >
+
+
+        <div class="page-header">
+
+
+          <div>
+
+            <div class="breadcrumb">
+              PANEL ADMINISTRATOR
+            </div>
+
+
+            <h1>
+              Log Aktivitas
+            </h1>
+
+
+            <p>
+              Riwayat aktivitas sistem.
+            </p>
+
+          </div>
+
+
+          <button
+            id="refreshLogsButton"
+            class="btn btn-secondary"
+            type="button"
+          >
+
+            ↻
+            <span>
+              Refresh
+            </span>
+
+          </button>
+
+
+        </div>
+
+
+
+        <div class="privacy-notice">
+
+
+          <span class="privacy-icon">
+            🔐
+          </span>
+
+
+          <div>
+
+            <strong>
+              Catatan keamanan
+            </strong>
+
+
+            <span>
+              Log tidak menyimpan informasi calon
+              yang dipilih oleh pemilih.
+            </span>
+
+          </div>
+
+
+        </div>
+
+
+
+        <div class="panel table-panel">
+
+
+          <div class="table-wrapper">
+
+
+            <table>
+
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    Waktu
+                  </th>
+
+                  <th>
+                    Aktivitas
+                  </th>
+
+                  <th>
+                    ID Pemilih
+                  </th>
+
+                  <th>
+                    Keterangan
+                  </th>
+
+                </tr>
+
+              </thead>
+
+
+              <tbody id="logsTableBody">
+
+
+                <tr>
+
+                  <td
+                    colspan="4"
+                    class="loading-cell"
+                  >
+                    Memuat log...
+                  </td>
+
+                </tr>
+
+
+              </tbody>
+
+
+            </table>
+
+
+          </div>
+
+
+        </div>
+
+
+      </section>
+
+
+
+      <!-- =================================================
+           PENGATURAN
+      ================================================== -->
+
+      <section
+        id="section-settings"
+        class="content-section"
+      >
+
+
+        <div class="page-header">
+
+
+          <div>
+
+            <div class="breadcrumb">
+              PANEL ADMINISTRATOR
+            </div>
+
+
+            <h1>
+              Pengaturan Pemilihan
+            </h1>
+
+
+            <p>
+              Atur status pelaksanaan pemilihan.
+            </p>
+
+          </div>
+
+
+        </div>
+
+
+
+        <div class="settings-grid">
+
+
+          <!-- STATUS -->
+
+          <div class="panel">
+
+
+            <div class="panel-header">
+
+
+              <div>
+
+                <h3>
+                  Status Pemilihan
+                </h3>
+
+
+                <p>
+                  Status menentukan apakah pemilih
+                  dapat melakukan voting.
+                </p>
+
+              </div>
+
+
+            </div>
+
+
+
+            <div class="form-group">
+
+
+              <label for="statusSelect">
+                Status
+              </label>
+
+
+              <select id="statusSelect">
+
+
+                <option value="BELUM_DIMULAI">
+                  BELUM DIMULAI
+                </option>
+
+
+                <option value="BERLANGSUNG">
+                  BERLANGSUNG
+                </option>
+
+
+                <option value="SELESAI">
+                  SELESAI
+                </option>
+
+
+              </select>
+
+
+            </div>
+
+
+
+            <button
+              id="saveStatusButton"
+              class="btn btn-primary"
+              type="button"
+            >
+
+              Simpan Status
+
+            </button>
+
+
+          </div>
+
+
+
+          <!-- INFORMASI -->
+
+          <div class="panel information-panel">
+
+
+            <div class="panel-header">
+
+
+              <div>
+
+                <h3>
+                  Informasi Pemilihan
+                </h3>
+
+              </div>
+
+
+            </div>
+
+
+
+            <div class="info-list">
+
+
+              <div class="info-row">
+
+                <span>
+                  Periode
+                </span>
+
+                <strong
+                  id="settingsPeriod"
+                >
+                  -
+                </strong>
+
+              </div>
+
+
+
+              <div class="info-row">
+
+                <span>
+                  Tanggal mulai
+                </span>
+
+                <strong
+                  id="startDate"
+                >
+                  -
+                </strong>
+
+              </div>
+
+
+
+              <div class="info-row">
+
+                <span>
+                  Tanggal selesai
+                </span>
+
+                <strong
+                  id="endDate"
+                >
+                  -
+                </strong>
+
+              </div>
+
+
+
+              <div class="info-row">
+
+                <span>
+                  Hasil ditampilkan
+                </span>
+
+                <strong
+                  id="resultVisibility"
+                >
+                  -
+                </strong>
+
+              </div>
+
+
+            </div>
+
+
+          </div>
+
+
+        </div>
+
+
+      </section>
+
+
+    </main>
+
+
+  </section>
+
+
+
+  <!-- =====================================================
+       TOAST
+  ====================================================== -->
+
+  <div
+    id="toast"
+    class="toast"
+  ></div>
+
+
+
+  <!-- =====================================================
+       JAVASCRIPT
+  ====================================================== -->
+
+  <script src="admin.js"></script>
+
+
+</body>
+
+</html>

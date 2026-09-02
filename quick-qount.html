@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Quick Count E-Voting RW 04"
+    >
+
+    <link
+        rel="icon"
+        type="image/png"
+        href="voting-box.png"
+    >
+
+    <title>
+        Quick Count - E-Voting RW 04
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="quick-count.css"
+    >
+</head>
+
+
+<body>
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="qc-header">
+
+        <div class="qc-header-inner">
+
+            <a
+                href="admin.html"
+                class="brand"
+            >
+
+                <div class="brand-icon">
+                    🗳️
+                </div>
+
+                <div class="brand-text">
+
+                    <strong>
+                        E-Voting RW 04
+                    </strong>
+
+                    <span>
+                        Quick Count
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <div class="header-actions">
+
+                <div
+                    id="connectionStatus"
+                    class="connection-status loading"
+                >
+
+                    <span class="status-dot"></span>
+
+                    <span id="connectionText">
+                        Memuat...
+                    </span>
+
+                </div>
+
+
+                <button
+                    id="refreshButton"
+                    class="refresh-button"
+                    type="button"
+                    title="Refresh data"
+                >
+
+                    <span id="refreshIcon">
+                        ↻
+                    </span>
+
+                    <span class="refresh-label">
+                        Refresh
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main class="main-container">
+
+
+        <!-- =================================================
+             HERO
+        ================================================== -->
+
+        <section class="hero">
+
+            <div class="hero-decoration hero-decoration-one"></div>
+            <div class="hero-decoration hero-decoration-two"></div>
+
+
+            <div class="hero-content">
+
+                <span class="eyebrow">
+                    ⚡ QUICK COUNT
+                </span>
+
+                <h1>
+                    Hasil Suara Sementara
+                </h1>
+
+                <p>
+                    Penggabungan suara
+                    <strong>online</strong> dan
+                    <strong>offline</strong>
+                    secara otomatis.
+                </p>
+
+            </div>
+
+
+            <div class="hero-info">
+
+                <div class="hero-election">
+                    <span>
+                        PEMILIHAN
+                    </span>
+
+                    <strong id="electionName">
+                        Pemilihan Ketua
+                        Pemuda/Pemudi RW 04
+                    </strong>
+                </div>
+
+
+                <div class="hero-status">
+
+                    <span class="live-dot"></span>
+
+                    <span id="electionStatus">
+                        MEMUAT
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             LAST UPDATE
+        ================================================== -->
+
+        <div class="update-bar">
+
+            <div class="update-info">
+
+                <span class="update-icon">
+                    🕐
+                </span>
+
+                <div>
+
+                    <span>
+                        Pembaruan terakhir
+                    </span>
+
+                    <strong id="lastUpdate">
+                        -
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="auto-refresh-info">
+
+                <span class="pulse"></span>
+
+                <span>
+                    Update otomatis setiap
+                    <strong>30 detik</strong>
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             SUMMARY
+        ================================================== -->
+
+        <section class="summary-grid">
+
+
+            <article class="summary-card online-card">
+
+                <div class="summary-icon">
+                    🌐
+                </div>
+
+                <div class="summary-content">
+
+                    <span class="summary-label">
+                        SUARA ONLINE
+                    </span>
+
+                    <strong
+                        id="onlineTotal"
+                        class="summary-value"
+                    >
+                        0
+                    </strong>
+
+                    <small>
+                        Suara dari sistem E-Voting
+                    </small>
+
+                </div>
+
+            </article>
+
+
+
+            <article class="summary-card offline-card">
+
+                <div class="summary-icon">
+                    📋
+                </div>
+
+                <div class="summary-content">
+
+                    <span class="summary-label">
+                        SUARA OFFLINE
+                    </span>
+
+                    <strong
+                        id="offlineTotal"
+                        class="summary-value"
+                    >
+                        0
+                    </strong>
+
+                    <small>
+                        Suara dari rekap offline
+                    </small>
+
+                </div>
+
+            </article>
+
+
+
+            <article class="summary-card total-card">
+
+                <div class="summary-icon">
+                    🗳️
+                </div>
+
+                <div class="summary-content">
+
+                    <span class="summary-label">
+                        TOTAL SUARA SAH
+                    </span>
+
+                    <strong
+                        id="grandTotal"
+                        class="summary-value"
+                    >
+                        0
+                    </strong>
+
+                    <small>
+                        Online + Offline
+                    </small>
+
+                </div>
+
+            </article>
+
+
+
+            <article class="summary-card invalid-card">
+
+                <div class="summary-icon">
+                    ⚠️
+                </div>
+
+                <div class="summary-content">
+
+                    <span class="summary-label">
+                        SUARA TIDAK SAH
+                    </span>
+
+                    <strong
+                        id="invalidTotal"
+                        class="summary-value"
+                    >
+                        0
+                    </strong>
+
+                    <small>
+                        Rekap offline
+                    </small>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+
+        <!-- =================================================
+             MAIN RESULTS
+        ================================================== -->
+
+        <section class="results-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        PEROLEHAN SUARA
+                    </span>
+
+                    <h2>
+                        Ranking Calon
+                    </h2>
+
+                    <p>
+                        Total suara merupakan hasil
+                        penggabungan online dan offline.
+                    </p>
+
+                </div>
+
+
+                <div class="total-badge">
+
+                    <span>
+                        Total Sah
+                    </span>
+
+                    <strong id="headingTotal">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 WINNER
+            ================================================== -->
+
+            <div
+                id="winnerCard"
+                class="winner-card hidden"
+            >
+
+                <div class="winner-crown">
+                    🏆
+                </div>
+
+                <div class="winner-info">
+
+                    <span>
+                        PERINGKAT 1 SEMENTARA
+                    </span>
+
+                    <strong id="winnerName">
+                        -
+                    </strong>
+
+                    <small id="winnerDetail">
+                        -
+                    </small>
+
+                </div>
+
+
+                <div class="winner-votes">
+
+                    <strong id="winnerVotes">
+                        0
+                    </strong>
+
+                    <span>
+                        suara
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 RESULT LIST
+            ================================================== -->
+
+            <div
+                id="resultsContainer"
+                class="results-container"
+            >
+
+                <div class="loading-state">
+
+                    <div class="spinner"></div>
+
+                    <strong>
+                        Memuat quick count...
+                    </strong>
+
+                    <span>
+                        Mengambil data online dan offline.
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             DETAIL TABLE
+        ================================================== -->
+
+        <section class="detail-section">
+
+
+            <div class="section-heading compact">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        DETAIL
+                    </span>
+
+                    <h2>
+                        Rincian Suara
+                    </h2>
+
+                    <p>
+                        Perbandingan suara online,
+                        offline, dan total.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="table-card">
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Rank
+                                </th>
+
+                                <th>
+                                    Calon
+                                </th>
+
+                                <th>
+                                    Online
+                                </th>
+
+                                <th>
+                                    Offline
+                                </th>
+
+                                <th>
+                                    Total
+                                </th>
+
+                                <th>
+                                    %
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="detailTableBody">
+
+                            <tr>
+
+                                <td
+                                    colspan="6"
+                                    class="table-loading"
+                                >
+                                    Memuat data...
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             SOURCE INFO
+        ================================================== -->
+
+        <section class="source-grid">
+
+
+            <div class="source-card">
+
+                <div class="source-icon online">
+                    🌐
+                </div>
+
+                <div>
+
+                    <strong>
+                        Sumber Online
+                    </strong>
+
+                    <span>
+                        Sistem E-Voting RW 04
+                    </span>
+
+                </div>
+
+                <div class="source-status">
+                    ONLINE
+                </div>
+
+            </div>
+
+
+
+            <div class="source-card">
+
+                <div class="source-icon offline">
+                    📋
+                </div>
+
+                <div>
+
+                    <strong>
+                        Sumber Offline
+                    </strong>
+
+                    <span>
+                        Google Spreadsheet • OFFLINE
+                    </span>
+
+                </div>
+
+                <div
+                    id="offlineSourceStatus"
+                    class="source-status"
+                >
+                    MEMUAT
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             PRIVACY
+        ================================================== -->
+
+        <div class="privacy-note">
+
+            <span>
+                🔒
+            </span>
+
+            <p>
+                Quick Count hanya menampilkan jumlah
+                suara. Sistem tidak menampilkan hubungan
+                antara identitas pemilih dan calon yang
+                dipilih.
+            </p>
+
+        </div>
+
+
+    </main>
+
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer class="qc-footer">
+
+        E-Voting Pemuda/Pemudi RW 04
+        • 2026
+        • Quick Count
+
+    </footer>
+
+
+
+    <!-- =====================================================
+         TOAST
+    ====================================================== -->
+
+    <div
+        id="toast"
+        class="toast"
+    ></div>
+
+
+
+    <script src="quick-count.js"></script>
+
+</body>
+
+</html>
