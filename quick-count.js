@@ -1,90 +1,81 @@
-/* ============================================================
-   E-VOTING RW 04
-   QUICK COUNT JAVASCRIPT
-   VERSION FINAL
-   ============================================================
+/**
+ * ================================================================
+ * E-VOTING RW 04
+ * QUICK COUNT JAVASCRIPT
+ * VERSION FINAL
+ * ================================================================
+ *
+ * SUMBER DATA:
+ * 1. ONLINE  -> Apps Script E-Voting utama
+ * 2. OFFLINE -> QuickCount.gs -> Google Spreadsheet "OFFLINE"
+ *
+ * FITUR:
+ * - ONLINE menggunakan API E-Voting utama
+ * - OFFLINE menggunakan QuickCount.gs API
+ * - OFFLINE TIDAK menggunakan Published CSV
+ * - ONLINE dan OFFLINE dimuat bersamaan
+ * - Auto refresh setiap 5 detik
+ * - Jika salah satu sumber gagal, sumber lainnya tetap digunakan
+ * - Data lama dipertahankan jika request gagal
+ * - Data ONLINE membaca response "hasil"
+ * - Data OFFLINE membaca response "data"
+ *
+ * FORMAT SHEET OFFLINE:
+ *
+ * tanggal | calon_id | suara | tidak_sah
+ *
+ * ================================================================
+ */
 
-   FUNGSI:
-   ------------------------------------------------------------
-   1. Ambil suara ONLINE dari backend E-Voting
-   2. Ambil suara OFFLINE dari Google Spreadsheet
-   3. Gabungkan ONLINE + OFFLINE berdasarkan calon_id
-   4. Hitung total suara
-   5. Hitung ranking
-   6. Hitung persentase
-   7. Hitung suara tidak sah
-   8. Tampilkan sumber suara
-   9. Auto refresh
-   10. Tetap menampilkan data jika salah satu sumber gagal
-   11. Responsive melalui HTML/CSS
-   ============================================================ */
 
-
-/* ============================================================
+/* ================================================================
    KONFIGURASI
-   ============================================================ */
+   ================================================================ */
 
 
-/* ------------------------------------------------------------
-   API E-VOTING
-   ------------------------------------------------------------ */
-
+/*
+ * ==============================================================
+ * API E-VOTING UTAMA
+ * ==============================================================
+ */
 const API_URL =
     "https://script.google.com/macros/s/AKfycbw-yX3a_9GzhCCtByS4g_IXRJsVhMN-CnvJsKQ0EFu-01n_mwa_Jftt6ex9IlYtHQ0W0g/exec";
 
 
-/* ------------------------------------------------------------
-   GOOGLE SHEET OFFLINE
-   ------------------------------------------------------------
-
-   Sheet:
-   OFFLINE
-
-   Format:
-
-   tanggal | calon_id | suara | tidak_sah
-
-   Contoh:
-
-   09/01/26 | C01 | 125 | 5
-   09/01/26 | C02 | 110 |
-   09/01/26 | C03 | 125 |
-
-   URL menggunakan published spreadsheet.
-   ------------------------------------------------------------ */
-
-const OFFLINE_CSV_URL =
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTbeglawIzT8EbeaEIPj-F4YWOACZcnb38vpGFN6kMWZTUmBgDtU5VvwdZZ7GOTYylZvLPwvlmG6_-M/pub?gid=1093861696&single=true&output=csv";
+/*
+ * ==============================================================
+ * API QUICK COUNT OFFLINE
+ * ==============================================================
+ *
+ * QuickCount.gs
+ */
+const OFFLINE_API_URL =
+    "https://script.google.com/macros/s/AKfycbw1rAEtUPJuALTYw7y1awpJYfqk5oe3FvvxnQux4HnzjsvYkAyuELYLaL5pw6oIX4Ar/exec";
 
 
-/* ------------------------------------------------------------
-   AUTO REFRESH
-   ------------------------------------------------------------
-
-   30 detik.
-   ------------------------------------------------------------ */
-
+/*
+ * ==============================================================
+ * AUTO REFRESH
+ * ==============================================================
+ *
+ * 5 detik
+ */
 const AUTO_REFRESH_INTERVAL =
-    30 * 1000;
+    5 * 1000;
 
 
-/* ------------------------------------------------------------
-   REQUEST TIMEOUT
-   ------------------------------------------------------------
-
-   Agar halaman tidak "memuat terus" selamanya.
-
-   Jika server tidak merespons dalam 15 detik,
-   request dianggap gagal.
-   ------------------------------------------------------------ */
-
+/*
+ * ==============================================================
+ * REQUEST TIMEOUT
+ * ==============================================================
+ */
 const REQUEST_TIMEOUT =
     15000;
 
 
-/* ============================================================
+/* ================================================================
    STATE
-   ============================================================ */
+   ================================================================ */
 
 let onlineResults = [];
 
@@ -99,124 +90,148 @@ let autoRefreshTimer = null;
 let isLoading = false;
 
 
-/* ============================================================
-   ELEMENT
-   ============================================================ */
-
-const refreshButton =
-    document.getElementById(
-        "refreshButton"
-    );
-
-const refreshIcon =
-    document.getElementById(
-        "refreshIcon"
-    );
-
-const connectionStatus =
-    document.getElementById(
-        "connectionStatus"
-    );
-
-const connectionText =
-    document.getElementById(
-        "connectionText"
-    );
+/* ================================================================
+   DOM ELEMENT
+   ================================================================ */
 
 const electionName =
     document.getElementById(
         "electionName"
     );
 
+
 const electionStatus =
     document.getElementById(
         "electionStatus"
     );
 
-const onlineTotal =
-    document.getElementById(
-        "onlineTotal"
-    );
-
-const offlineTotal =
-    document.getElementById(
-        "offlineTotal"
-    );
-
-const grandTotal =
-    document.getElementById(
-        "grandTotal"
-    );
-
-const invalidTotal =
-    document.getElementById(
-        "invalidTotal"
-    );
-
-const headingTotal =
-    document.getElementById(
-        "headingTotal"
-    );
-
-const lastUpdate =
-    document.getElementById(
-        "lastUpdate"
-    );
-
-const winnerCard =
-    document.getElementById(
-        "winnerCard"
-    );
-
-const winnerName =
-    document.getElementById(
-        "winnerName"
-    );
-
-const winnerDetail =
-    document.getElementById(
-        "winnerDetail"
-    );
-
-const winnerVotes =
-    document.getElementById(
-        "winnerVotes"
-    );
 
 const resultsContainer =
     document.getElementById(
         "resultsContainer"
     );
 
+
 const detailTableBody =
     document.getElementById(
         "detailTableBody"
     );
+
+
+const winnerCard =
+    document.getElementById(
+        "winnerCard"
+    );
+
+
+const winnerName =
+    document.getElementById(
+        "winnerName"
+    );
+
+
+const winnerVotes =
+    document.getElementById(
+        "winnerVotes"
+    );
+
+
+const winnerDetail =
+    document.getElementById(
+        "winnerDetail"
+    );
+
+
+const lastUpdate =
+    document.getElementById(
+        "lastUpdate"
+    );
+
+
+const refreshButton =
+    document.getElementById(
+        "refreshButton"
+    );
+
 
 const offlineSourceStatus =
     document.getElementById(
         "offlineSourceStatus"
     );
 
-const toast =
+
+/*
+ * Beberapa kemungkinan nama element status.
+ */
+const connectionStatus =
     document.getElementById(
-        "toast"
+        "connectionStatus"
+    ) ||
+    document.getElementById(
+        "connection-status"
+    ) ||
+    document.getElementById(
+        "statusConnection"
     );
 
 
-/* ============================================================
-   UTILITY
-   ============================================================ */
+const loadingIndicator =
+    document.getElementById(
+        "loadingIndicator"
+    ) ||
+    document.getElementById(
+        "loading"
+    );
 
 
-/* ------------------------------------------------------------
-   Format angka Indonesia
-   ------------------------------------------------------------ */
+/* ================================================================
+   HELPER - ESCAPE HTML
+   ================================================================ */
 
-function formatNumber(value) {
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* ================================================================
+   HELPER - NUMBER
+   ================================================================ */
+
+function formatNumber(
+    value
+) {
 
     const number =
-        Number(value || 0);
+        Number(
+            value || 0
+        );
+
 
     return number.toLocaleString(
         "id-ID"
@@ -225,215 +240,29 @@ function formatNumber(value) {
 }
 
 
-/* ------------------------------------------------------------
-   Escape HTML
-   ------------------------------------------------------------ */
-
-function escapeHtml(value) {
-
-    return String(value ?? "")
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
-
-}
-
-
-/* ------------------------------------------------------------
-   Konversi angka aman
-   ------------------------------------------------------------
-
-   Mendukung:
-
-   125
-   "125"
-   "1.250"
-   "1,250"
-   "1.250,50"
-   "1,250.50"
-   ------------------------------------------------------------ */
-
-function toNumber(value) {
-
-    if (
-        value === null ||
-        value === undefined ||
-        value === ""
-    ) {
-
-        return 0;
-
-    }
-
-
-    let text =
-        String(value)
-            .trim();
-
-
-    if (!text) {
-
-        return 0;
-
-    }
-
-
-    /*
-     * Hapus spasi.
-     */
-    text =
-        text.replace(/\s/g, "");
-
-
-    /*
-     * Jika format:
-     *
-     * 1.250,50
-     *
-     * maka titik adalah pemisah ribuan
-     * dan koma adalah desimal.
-     */
-    if (
-        text.includes(".") &&
-        text.includes(",")
-    ) {
-
-        const lastDot =
-            text.lastIndexOf(".");
-
-        const lastComma =
-            text.lastIndexOf(",");
-
-
-        if (
-            lastComma > lastDot
-        ) {
-
-            text =
-                text
-                    .replace(/\./g, "")
-                    .replace(",", ".");
-
-        } else {
-
-            text =
-                text
-                    .replace(/,/g, "");
-
-        }
-
-    }
-
-    /*
-     * Jika hanya koma:
-     *
-     * 1250,5
-     *
-     * dianggap desimal.
-     */
-    else if (
-        text.includes(",")
-    ) {
-
-        const parts =
-            text.split(",");
-
-
-        /*
-         * Jika setelah koma tepat 3 digit,
-         * kemungkinan format ribuan:
-         *
-         * 1,250
-         */
-        if (
-            parts.length === 2 &&
-            parts[1].length === 3 &&
-            parts[0].length <= 3
-        ) {
-
-            text =
-                text.replace(",", "");
-
-        } else {
-
-            text =
-                text.replace(",", ".");
-
-        }
-
-    }
-
-    /*
-     * Jika hanya titik:
-     *
-     * 1.250
-     *
-     * dianggap ribuan.
-     */
-    else if (
-        text.includes(".")
-    ) {
-
-        const parts =
-            text.split(".");
-
-
-        if (
-            parts.length === 2 &&
-            parts[1].length === 3
-        ) {
-
-            text =
-                text.replace(".", "");
-
-        }
-
-    }
-
-
-    const number =
-        Number(text);
-
-
-    return Number.isFinite(number)
-        ? number
-        : 0;
-
-}
-
-
-/* ------------------------------------------------------------
-   Persentase
-   ------------------------------------------------------------ */
+/* ================================================================
+   HELPER - PERCENTAGE
+   ================================================================ */
 
 function percentage(
     value,
     total
 ) {
 
-    const numericTotal =
-        Number(total || 0);
+    const v =
+        Number(
+            value || 0
+        );
+
+
+    const t =
+        Number(
+            total || 0
+        );
 
 
     if (
-        numericTotal <= 0
+        t <= 0
     ) {
 
         return 0;
@@ -442,160 +271,33 @@ function percentage(
 
 
     return (
-        Number(value || 0) /
-        numericTotal
+        v / t
     ) * 100;
 
 }
 
 
-/* ------------------------------------------------------------
-   Toast
-   ------------------------------------------------------------ */
-
-function showToast(
-    message
-) {
-
-    if (!toast) {
-
-        return;
-
-    }
-
-
-    toast.textContent =
-        message || "";
-
-
-    toast.classList.add(
-        "show"
-    );
-
-
-    clearTimeout(
-        showToast.timer
-    );
-
-
-    showToast.timer =
-        setTimeout(
-            function() {
-
-                toast.classList.remove(
-                    "show"
-                );
-
-            },
-            3000
-        );
-
-}
-
-
-/* ------------------------------------------------------------
-   Connection status
-   ------------------------------------------------------------ */
-
-function setConnectionStatus(
-    type,
-    text
-) {
-
-    if (
-        connectionStatus
-    ) {
-
-        connectionStatus.className =
-            "connection-status " +
-            type;
-
-    }
-
-
-    if (
-        connectionText
-    ) {
-
-        connectionText.textContent =
-            text || "";
-
-    }
-
-}
-
-
-/* ------------------------------------------------------------
-   Loading
-   ------------------------------------------------------------ */
-
-function setLoading(
-    loading
-) {
-
-    isLoading =
-        Boolean(loading);
-
-
-    if (
-        refreshButton
-    ) {
-
-        refreshButton.disabled =
-            loading;
-
-        refreshButton.classList.toggle(
-            "loading",
-            loading
-        );
-
-    }
-
-
-    if (
-        refreshIcon
-    ) {
-
-        refreshIcon.classList.toggle(
-            "spinning",
-            loading
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   FETCH DENGAN TIMEOUT
-   ============================================================ */
-
-
-/* ------------------------------------------------------------
-   safeFetch
-   ------------------------------------------------------------
-
-   Fungsi penting agar tidak loading selamanya.
-   ------------------------------------------------------------ */
+/* ================================================================
+   SAFE FETCH
+   ================================================================ */
 
 async function safeFetch(
     url,
-    options = {},
-    timeout = REQUEST_TIMEOUT
+    options = {}
 ) {
 
     const controller =
         new AbortController();
 
 
-    const timeoutId =
+    const timeout =
         setTimeout(
             function() {
 
                 controller.abort();
 
             },
-            timeout
+            REQUEST_TIMEOUT
         );
 
 
@@ -614,17 +316,18 @@ async function safeFetch(
 
         return response;
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         if (
             error &&
-            error.name === "AbortError"
+            error.name ===
+                "AbortError"
         ) {
 
             throw new Error(
-                "Request timeout. Server tidak merespons dalam " +
-                (timeout / 1000) +
-                " detik."
+                "Request timeout."
             );
 
         }
@@ -635,7 +338,7 @@ async function safeFetch(
     } finally {
 
         clearTimeout(
-            timeoutId
+            timeout
         );
 
     }
@@ -643,29 +346,17 @@ async function safeFetch(
 }
 
 
-/* ============================================================
-   API E-VOTING
-   ============================================================ */
-
-
-/* ------------------------------------------------------------
-   GET API
-   ------------------------------------------------------------ */
+/* ================================================================
+   API GET ONLINE
+   ================================================================ */
 
 async function apiGet(
     action
 ) {
 
-    const separator =
-        API_URL.includes("?")
-            ? "&"
-            : "?";
-
-
     const url =
         API_URL +
-        separator +
-        "action=" +
+        "?action=" +
         encodeURIComponent(
             action
         ) +
@@ -677,8 +368,16 @@ async function apiGet(
         await safeFetch(
             url,
             {
-                method: "GET",
-                cache: "no-store"
+                method:
+                    "GET",
+
+                cache:
+                    "no-store",
+
+                headers: {
+                    "Accept":
+                        "application/json"
+                }
             }
         );
 
@@ -688,49 +387,15 @@ async function apiGet(
     ) {
 
         throw new Error(
-            "Server E-Voting mengembalikan HTTP " +
+            "HTTP " +
             response.status
         );
 
     }
 
 
-    const text =
-        await response.text();
-
-
-    if (!text) {
-
-        throw new Error(
-            "Server E-Voting memberikan response kosong."
-        );
-
-    }
-
-
-    let result;
-
-
-    try {
-
-        result =
-            JSON.parse(
-                text
-            );
-
-    } catch (error) {
-
-        console.error(
-            "Response API bukan JSON:",
-            text
-        );
-
-
-        throw new Error(
-            "Response server E-Voting bukan JSON yang valid."
-        );
-
-    }
+    const result =
+        await response.json();
 
 
     return result;
@@ -738,9 +403,9 @@ async function apiGet(
 }
 
 
-/* ------------------------------------------------------------
-   POST API
-   ------------------------------------------------------------ */
+/* ================================================================
+   API POST ONLINE
+   ================================================================ */
 
 async function apiPost(
     data
@@ -748,9 +413,15 @@ async function apiPost(
 
     const response =
         await safeFetch(
-            API_URL,
+            API_URL +
+            "?_=" +
+            Date.now(),
             {
-                method: "POST",
+                method:
+                    "POST",
+
+                cache:
+                    "no-store",
 
                 headers: {
                     "Content-Type":
@@ -770,81 +441,115 @@ async function apiPost(
     ) {
 
         throw new Error(
-            "Server E-Voting mengembalikan HTTP " +
+            "HTTP " +
             response.status
         );
 
     }
 
 
-    const text =
-        await response.text();
-
-
-    if (!text) {
-
-        throw new Error(
-            "Server E-Voting memberikan response kosong."
-        );
-
-    }
-
-
-    let result;
-
-
-    try {
-
-        result =
-            JSON.parse(
-                text
-            );
-
-    } catch (error) {
-
-        console.error(
-            "Response POST bukan JSON:",
-            text
-        );
-
-
-        throw new Error(
-            "Response server E-Voting bukan JSON yang valid."
-        );
-
-    }
-
-
-    return result;
+    return await response.json();
 
 }
 
 
-/* ============================================================
-   LOAD ONLINE
-   ============================================================ */
+/* ================================================================
+   LOAD ONLINE RESULTS
+   ================================================================ */
 
 async function loadOnlineResults() {
 
     /*
-     * Cari token admin.
+     * ==========================================================
+     * AMBIL TOKEN ADMIN
+     * ==========================================================
+     *
+     * Token yang digunakan sistem E-Voting:
+     *
+     * 1. sessionStorage admin_token
+     * 2. sessionStorage evoting_admin_token
+     * 3. localStorage admin_token
+     *
+     * JANGAN menggunakan "adminToken".
      */
 
-    const adminToken =
-        sessionStorage.getItem(
-            "admin_token"
-        ) ||
-        sessionStorage.getItem(
-            "evoting_admin_token"
-        ) ||
-        localStorage.getItem(
-            "admin_token"
+    let adminToken =
+        null;
+
+
+    try {
+
+        adminToken =
+            sessionStorage.getItem(
+                "admin_token"
+            ) ||
+            sessionStorage.getItem(
+                "evoting_admin_token"
+            );
+
+    } catch (
+        error
+    ) {
+
+        console.warn(
+            "SessionStorage tidak dapat diakses:",
+            error
         );
+
+    }
 
 
     /*
-     * Jika ada token,
-     * gunakan admin_results.
+     * Jika token belum ditemukan,
+     * coba localStorage.
+     */
+
+    if (
+        !adminToken
+    ) {
+
+        try {
+
+            adminToken =
+                localStorage.getItem(
+                    "admin_token"
+                );
+
+        } catch (
+            error
+        ) {
+
+            console.warn(
+                "LocalStorage tidak dapat diakses:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /*
+     * ==========================================================
+     * DEBUG TOKEN
+     * ==========================================================
+     */
+
+    console.log(
+        "STATUS TOKEN ADMIN:",
+        adminToken
+            ? "DITEMUKAN"
+            : "TIDAK DITEMUKAN"
+    );
+
+
+    /*
+     * ==========================================================
+     * ADMIN RESULTS
+     * ==========================================================
+     *
+     * Jika token tersedia,
+     * gunakan endpoint admin_results.
      */
 
     if (
@@ -854,14 +559,31 @@ async function loadOnlineResults() {
         try {
 
             const result =
-                await apiPost({
-                    action:
-                        "admin_results",
+                await apiPost(
+                    {
+                        action:
+                            "admin_results",
 
-                    token:
-                        adminToken
-                });
+                        token:
+                            adminToken
+                    }
+                );
 
+
+            console.log(
+                "RESPONSE ADMIN RESULTS:",
+                result
+            );
+
+
+            /*
+             * Response yang benar:
+             *
+             * {
+             *     success: true,
+             *     hasil: [...]
+             * }
+             */
 
             if (
                 result &&
@@ -884,19 +606,14 @@ async function loadOnlineResults() {
 
             }
 
-            /*
-             * Jika token invalid,
-             * jangan langsung membuat
-             * Quick Count gagal.
-             *
-             * Coba endpoint public.
-             */
 
             console.warn(
-                "Token admin tidak valid. Mencoba endpoint hasil publik."
+                "admin_results tidak berhasil. Mencoba endpoint hasil publik."
             );
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
             console.warn(
                 "admin_results gagal:",
@@ -909,7 +626,9 @@ async function loadOnlineResults() {
 
 
     /*
-     * Fallback endpoint publik.
+     * ==========================================================
+     * FALLBACK HASIL PUBLIK
+     * ==========================================================
      */
 
     const result =
@@ -918,18 +637,35 @@ async function loadOnlineResults() {
         );
 
 
+    console.log(
+        "RESPONSE HASIL ONLINE:",
+        result
+    );
+
+
     if (
         !result ||
-        !result.success
+        result.success === false
     ) {
 
         throw new Error(
-            result?.message ||
-            "Hasil online belum dapat diakses."
+            result &&
+            result.message
+                ? result.message
+                : "Data online gagal dimuat."
         );
 
     }
 
+
+    /*
+     * Response yang benar:
+     *
+     * {
+     *     success: true,
+     *     hasil: [...]
+     * }
+     */
 
     return {
 
@@ -948,277 +684,25 @@ async function loadOnlineResults() {
 }
 
 
-/* ============================================================
-   CSV PARSER
-   ============================================================ */
-
-
-/* ------------------------------------------------------------
-   Parse satu baris CSV
-   ------------------------------------------------------------ */
-
-function parseCsvLine(
-    line
-) {
-
-    const result = [];
-
-    let current = "";
-
-    let insideQuotes =
-        false;
-
-
-    for (
-        let i = 0;
-        i < line.length;
-        i++
-    ) {
-
-        const char =
-            line[i];
-
-
-        /*
-         * Quote.
-         */
-
-        if (
-            char === '"'
-        ) {
-
-            /*
-             * Double quote di dalam field.
-             */
-
-            if (
-                insideQuotes &&
-                line[i + 1] === '"'
-            ) {
-
-                current += '"';
-
-                i++;
-
-            } else {
-
-                insideQuotes =
-                    !insideQuotes;
-
-            }
-
-            continue;
-
-        }
-
-
-        /*
-         * Pemisah koma.
-         */
-
-        if (
-            char === "," &&
-            !insideQuotes
-        ) {
-
-            result.push(
-                current
-            );
-
-            current = "";
-
-            continue;
-
-        }
-
-
-        current +=
-            char;
-
-    }
-
-
-    result.push(
-        current
-    );
-
-
-    return result.map(
-        function(value) {
-
-            return String(
-                value
-            )
-            .trim()
-            .replace(
-                /^"|"$/g,
-                ""
-            );
-
-        }
-    );
-
-}
-
-
-/* ------------------------------------------------------------
-   Parse CSV penuh
-   ------------------------------------------------------------ */
-
-function parseCsv(
-    text
-) {
-
-    if (
-        !text
-    ) {
-
-        return [];
-
-    }
-
-
-    /*
-     * Hilangkan BOM UTF-8.
-     */
-
-    let cleanText =
-        String(text)
-            .replace(
-                /^\uFEFF/,
-                ""
-            );
-
-
-    /*
-     * Normalisasi newline.
-     */
-
-    cleanText =
-        cleanText
-            .replace(/\r\n/g, "\n")
-            .replace(/\r/g, "\n");
-
-
-    /*
-     * Split line.
-     */
-
-    const lines =
-        cleanText
-            .split("\n")
-            .filter(
-                line =>
-                    line.trim() !== ""
-            );
-
-
-    if (
-        lines.length < 2
-    ) {
-
-        return [];
-
-    }
-
-
-    /*
-     * Header.
-     */
-
-    const headers =
-        parseCsvLine(
-            lines[0]
-        )
-        .map(
-            function(header) {
-
-                return header
-                    .trim()
-                    .toLowerCase();
-
-            }
-        );
-
-
-    const rows = [];
-
-
-    /*
-     * Data.
-     */
-
-    for (
-        let i = 1;
-        i < lines.length;
-        i++
-    ) {
-
-        const columns =
-            parseCsvLine(
-                lines[i]
-            );
-
-
-        /*
-         * Lewati baris kosong.
-         */
-
-        if (
-            columns.every(
-                value =>
-                    String(
-                        value
-                    ).trim() === ""
-            )
-        ) {
-
-            continue;
-
-        }
-
-
-        const row = {};
-
-
-        headers.forEach(
-            function(
-                header,
-                index
-            ) {
-
-                row[header] =
-                    columns[index] ??
-                    "";
-
-            }
-        );
-
-
-        rows.push(
-            row
-        );
-
-    }
-
-
-    return rows;
-
-}
-
-
-/* ============================================================
-   LOAD OFFLINE
-   ============================================================ */
+/* ================================================================
+   LOAD OFFLINE RESULTS
+   ================================================================ */
 
 async function loadOfflineResults() {
 
+    /*
+     * Pastikan URL tersedia.
+     */
+
     if (
-        !OFFLINE_CSV_URL
+        !OFFLINE_API_URL ||
+        OFFLINE_API_URL.includes(
+            "PASTE_URL_WEB_APP"
+        )
     ) {
 
         throw new Error(
-            "URL CSV OFFLINE belum diatur."
+            "OFFLINE_API_URL belum diisi dengan URL Web App QuickCount.gs."
         );
 
     }
@@ -1226,27 +710,17 @@ async function loadOfflineResults() {
 
     /*
      * Cache busting.
-     *
-     * Penting agar browser tidak
-     * menggunakan CSV lama.
      */
 
-    const separator =
-        OFFLINE_CSV_URL.includes("?")
-            ? "&"
-            : "?";
-
-
     const url =
-        OFFLINE_CSV_URL +
-        separator +
-        "_=" +
+        OFFLINE_API_URL +
+        "?action=offline_results&_=" +
         Date.now();
 
 
     console.log(
-        "Mengambil CSV OFFLINE:",
-        OFFLINE_CSV_URL
+        "REQUEST OFFLINE:",
+        url
     );
 
 
@@ -1254,13 +728,15 @@ async function loadOfflineResults() {
         await safeFetch(
             url,
             {
-                method: "GET",
+                method:
+                    "GET",
 
-                cache: "no-store",
+                cache:
+                    "no-store",
 
                 headers: {
                     "Accept":
-                        "text/csv,text/plain,*/*"
+                        "application/json"
                 }
             }
         );
@@ -1271,168 +747,89 @@ async function loadOfflineResults() {
     ) {
 
         throw new Error(
-            "Google Spreadsheet OFFLINE mengembalikan HTTP " +
+            "Offline API HTTP " +
             response.status
         );
 
     }
 
 
-    const text =
-        await response.text();
+    const result =
+        await response.json();
 
+
+    console.log(
+        "RESPONSE OFFLINE:",
+        result
+    );
+
+
+    /*
+     * Validasi response QuickCount.gs.
+     */
 
     if (
-        !text ||
-        !text.trim()
+        !result ||
+        result.success !== true
     ) {
 
         throw new Error(
-            "Google Spreadsheet OFFLINE kosong."
+            result &&
+            result.message
+                ? result.message
+                : "Offline API gagal mengembalikan data."
         );
 
     }
 
 
     /*
-     * Debug.
+     * Response QuickCount.gs:
+     *
+     * {
+     *     success: true,
+     *     data: [...]
+     * }
      */
-
-    console.log(
-        "CSV OFFLINE berhasil diambil."
-    );
-
-
-    const rows =
-        parseCsv(
-            text
-        );
-
-
-    if (
-        !Array.isArray(rows)
-    ) {
-
-        throw new Error(
-            "Format CSV OFFLINE tidak valid."
-        );
-
-    }
-
-
-    return rows;
-
-}
-
-
-/* ============================================================
-   NORMALIZE ONLINE
-   ============================================================ */
-
-
-/*
- * Backend biasanya:
- *
- * id_calon
- * nomor_urut
- * nama
- * suara
- */
-
-function normalizeOnline(
-    results
-) {
 
     if (
         !Array.isArray(
-            results
+            result.data
         )
     ) {
 
-        return [];
+        throw new Error(
+            "Format data Offline tidak valid."
+        );
 
     }
 
 
-    return results
-        .map(
-            function(item) {
+    console.log(
+        "OFFLINE API BERHASIL:",
+        {
+            count:
+                result.count,
 
-                const calonId =
-                    String(
-                        item?.id_calon ??
-                        item?.calon_id ??
-                        item?.id ??
-                        ""
-                    )
-                    .trim()
-                    .toUpperCase();
+            server_time:
+                result.server_time,
 
-
-                const nama =
-                    String(
-                        item?.nama ??
-                        item?.nama_calon ??
-                        "Calon " +
-                        calonId
-                    )
-                    .trim();
+            data:
+                result.data
+        }
+    );
 
 
-                const nomorUrut =
-                    item?.nomor_urut ??
-                    item?.nomor ??
-                    "";
-
-
-                return {
-
-                    calon_id:
-                        calonId,
-
-                    nomor_urut:
-                        nomorUrut,
-
-                    nama:
-                        nama,
-
-                    suara:
-                        toNumber(
-                            item?.suara
-                        )
-
-                };
-
-            }
-        )
-        .filter(
-            function(item) {
-
-                return Boolean(
-                    item.calon_id
-                );
-
-            }
-        );
+    return result.data;
 
 }
 
 
-/* ============================================================
-   NORMALIZE OFFLINE
-   ============================================================ */
+/* ================================================================
+   NORMALIZE ONLINE
+   ================================================================ */
 
-
-/*
- * Format:
- *
- * tanggal
- * calon_id
- * suara
- * tidak_sah
- */
-
-function normalizeOffline(
+function normalizeOnline(
     rows
 ) {
 
@@ -1451,45 +848,98 @@ function normalizeOffline(
         .map(
             function(row) {
 
+                if (
+                    !row
+                ) {
+
+                    return null;
+
+                }
+
+
+                /*
+                 * ID CALON
+                 */
+
                 const calonId =
                     String(
-                        row?.calon_id ??
+                        row.id_calon ??
+                        row.calon_id ??
+                        row.id ??
                         ""
                     )
                     .trim()
                     .toUpperCase();
 
 
-                return {
+                if (
+                    !calonId
+                ) {
 
-                    tanggal:
-                        String(
-                            row?.tanggal ??
-                            ""
-                        ).trim(),
+                    return null;
+
+                }
+
+
+                /*
+                 * SUARA
+                 */
+
+                const suara =
+                    Number(
+                        row.suara ??
+                        row.votes ??
+                        row.vote ??
+                        0
+                    ) || 0;
+
+
+                /*
+                 * NOMOR URUT
+                 */
+
+                const nomorUrut =
+                    row.nomor_urut ??
+                    row.nomor ??
+                    "";
+
+
+                /*
+                 * NAMA
+                 */
+
+                const nama =
+                    String(
+                        row.nama ??
+                        row.nama_calon ??
+                        calonId
+                    )
+                    .trim();
+
+
+                return {
 
                     calon_id:
                         calonId,
 
-                    suara:
-                        toNumber(
-                            row?.suara
-                        ),
+                    nama:
+                        nama,
 
-                    tidak_sah:
-                        toNumber(
-                            row?.tidak_sah
-                        )
+                    nomor_urut:
+                        nomorUrut,
+
+                    suara:
+                        suara
 
                 };
 
             }
         )
         .filter(
-            function(row) {
+            function(item) {
 
                 return Boolean(
-                    row.calon_id
+                    item
                 );
 
             }
@@ -1498,9 +948,164 @@ function normalizeOffline(
 }
 
 
-/* ============================================================
+/* ================================================================
+   NORMALIZE OFFLINE
+   ================================================================ */
+
+function normalizeOffline(
+    rows
+) {
+
+    if (
+        !Array.isArray(
+            rows
+        )
+    ) {
+
+        return [];
+
+    }
+
+
+    /*
+     * Data dari QuickCount.gs:
+     *
+     * {
+     *     tanggal,
+     *     calon_id,
+     *     suara,
+     *     tidak_sah
+     * }
+     *
+     * Semua baris dengan calon_id
+     * yang sama dijumlahkan.
+     */
+
+    const grouped =
+        {};
+
+
+    rows.forEach(
+        function(row) {
+
+            if (
+                !row
+            ) {
+
+                return;
+
+            }
+
+
+            /*
+             * ID CALON
+             */
+
+            const calonId =
+                String(
+                    row.calon_id ??
+                    row.id_calon ??
+                    ""
+                )
+                .trim()
+                .toUpperCase();
+
+
+            if (
+                !calonId
+            ) {
+
+                return;
+
+            }
+
+
+            /*
+             * SUARA OFFLINE
+             */
+
+            const suara =
+                Number(
+                    row.suara ?? 0
+                ) || 0;
+
+
+            /*
+             * SUARA TIDAK SAH
+             */
+
+            const tidakSah =
+                Number(
+                    row.tidak_sah ?? 0
+                ) || 0;
+
+
+            /*
+             * Buat object calon
+             * jika belum ada.
+             */
+
+            if (
+                !grouped[
+                    calonId
+                ]
+            ) {
+
+                grouped[
+                    calonId
+                ] = {
+
+                    calon_id:
+                        calonId,
+
+                    offline:
+                        0,
+
+                    tidak_sah:
+                        0,
+
+                    tanggal:
+                        row.tanggal ||
+                        ""
+
+                };
+
+            }
+
+
+            /*
+             * Tambahkan suara.
+             */
+
+            grouped[
+                calonId
+            ].offline +=
+                suara;
+
+
+            /*
+             * Tambahkan suara tidak sah.
+             */
+
+            grouped[
+                calonId
+            ].tidak_sah +=
+                tidakSah;
+
+        }
+    );
+
+
+    return Object.values(
+        grouped
+    );
+
+}
+
+
+/* ================================================================
    COMBINE ONLINE + OFFLINE
-   ============================================================ */
+   ================================================================ */
 
 function combineResults(
     online,
@@ -1508,106 +1113,109 @@ function combineResults(
 ) {
 
     const map =
-        new Map();
+        {};
 
 
-    /* --------------------------------------------------------
-       ONLINE
-       -------------------------------------------------------- */
+    /*
+     * ==========================================================
+     * ONLINE
+     * ==========================================================
+     */
 
     online.forEach(
         function(item) {
 
             const id =
-                item.calon_id;
+                String(
+                    item.calon_id
+                )
+                .trim()
+                .toUpperCase();
 
 
             if (
-                !map.has(id)
+                !id
             ) {
 
-                map.set(
-                    id,
-                    {
-
-                        calon_id:
-                            id,
-
-                        nomor_urut:
-                            item.nomor_urut ?? "",
-
-                        nama:
-                            item.nama || (
-                                "Calon " +
-                                id
-                            ),
-
-                        online:
-                            0,
-
-                        offline:
-                            0,
-
-                        tidak_sah:
-                            0,
-
-                        total:
-                            0,
-
-                        rank:
-                            0,
-
-                        percentage:
-                            0
-
-                    }
-                );
+                return;
 
             }
 
 
-            const current =
-                map.get(id);
+            /*
+             * Jika calon belum ada,
+             * buat object baru.
+             */
+
+            if (
+                !map[id]
+            ) {
+
+                map[id] = {
+
+                    calon_id:
+                        id,
+
+                    nama:
+                        item.nama ||
+                        id,
+
+                    nomor_urut:
+                        item.nomor_urut ??
+                        "",
+
+                    online:
+                        0,
+
+                    offline:
+                        0,
+
+                    tidak_sah:
+                        0,
+
+                    total:
+                        0,
+
+                    percentage:
+                        0,
+
+                    rank:
+                        0
+
+                };
+
+            }
 
 
-            current.online +=
-                toNumber(
-                    item.suara
+            /*
+             * Tambahkan suara ONLINE.
+             */
+
+            map[id].online +=
+                Number(
+                    item.suara || 0
                 );
 
 
             /*
-             * Isi nama jika sebelumnya kosong.
+             * Update nama.
              */
 
             if (
-                (
-                    !current.nama ||
-                    current.nama ===
-                        "Calon " + id
-                ) &&
                 item.nama
             ) {
 
-                current.nama =
+                map[id].nama =
                     item.nama;
 
             }
 
 
             /*
-             * Isi nomor urut.
+             * Update nomor urut.
              */
 
             if (
-                (
-                    current.nomor_urut ===
-                    "" ||
-                    current.nomor_urut ===
-                    null ||
-                    current.nomor_urut ===
-                    undefined
-                ) &&
                 item.nomor_urut !==
                     undefined &&
                 item.nomor_urut !==
@@ -1616,7 +1224,7 @@ function combineResults(
                     ""
             ) {
 
-                current.nomor_urut =
+                map[id].nomor_urut =
                     item.nomor_urut;
 
             }
@@ -1625,192 +1233,191 @@ function combineResults(
     );
 
 
-    /* --------------------------------------------------------
-       OFFLINE
-       -------------------------------------------------------- */
+    /*
+     * ==========================================================
+     * OFFLINE
+     * ==========================================================
+     */
 
     offline.forEach(
         function(item) {
 
             const id =
-                item.calon_id;
+                String(
+                    item.calon_id
+                )
+                .trim()
+                .toUpperCase();
 
 
             if (
-                !map.has(id)
+                !id
             ) {
 
-                map.set(
-                    id,
-                    {
-
-                        calon_id:
-                            id,
-
-                        nomor_urut:
-                            "",
-
-                        nama:
-                            "Calon " +
-                            id,
-
-                        online:
-                            0,
-
-                        offline:
-                            0,
-
-                        tidak_sah:
-                            0,
-
-                        total:
-                            0,
-
-                        rank:
-                            0,
-
-                        percentage:
-                            0
-
-                    }
-                );
+                return;
 
             }
 
 
-            const current =
-                map.get(id);
+            /*
+             * Jika calon hanya ada di OFFLINE,
+             * tetap masukkan ke hasil.
+             */
+
+            if (
+                !map[id]
+            ) {
+
+                map[id] = {
+
+                    calon_id:
+                        id,
+
+                    nama:
+                        id,
+
+                    nomor_urut:
+                        "",
+
+                    online:
+                        0,
+
+                    offline:
+                        0,
+
+                    tidak_sah:
+                        0,
+
+                    total:
+                        0,
+
+                    percentage:
+                        0,
+
+                    rank:
+                        0
+
+                };
+
+            }
 
 
-            current.offline +=
-                toNumber(
-                    item.suara
+            /*
+             * Tambahkan suara OFFLINE.
+             */
+
+            map[id].offline +=
+                Number(
+                    item.offline || 0
                 );
 
 
-            current.tidak_sah +=
-                toNumber(
-                    item.tidak_sah
+            /*
+             * Tambahkan suara TIDAK SAH.
+             */
+
+            map[id].tidak_sah +=
+                Number(
+                    item.tidak_sah || 0
                 );
 
         }
     );
 
 
-    /* --------------------------------------------------------
-       Convert Map -> Array
-       -------------------------------------------------------- */
+    /*
+     * ==========================================================
+     * HASIL OBJECT
+     * ==========================================================
+     */
 
     const results =
-        Array.from(
-            map.values()
+        Object.values(
+            map
         );
 
 
-    /* --------------------------------------------------------
-       TOTAL SUARA SAH
-       -------------------------------------------------------- */
+    /*
+     * ==========================================================
+     * TOTAL SUARA ONLINE + OFFLINE
+     * ==========================================================
+     */
 
     results.forEach(
         function(item) {
 
             item.total =
-                item.online +
-                item.offline;
+                Number(
+                    item.online || 0
+                ) +
+                Number(
+                    item.offline || 0
+                );
 
         }
     );
 
 
-    /* --------------------------------------------------------
-       SORT RANKING
-       -------------------------------------------------------- */
+    /*
+     * ==========================================================
+     * SORTING / RANKING
+     * ==========================================================
+     *
+     * Suara terbesar berada di atas.
+     *
+     * Jika jumlah suara sama,
+     * nomor urut calon menjadi tie breaker.
+     */
 
     results.sort(
         function(a, b) {
 
-            /*
-             * Suara terbanyak di atas.
-             */
+            const voteDifference =
+                Number(
+                    b.total || 0
+                ) -
+                Number(
+                    a.total || 0
+                );
+
 
             if (
-                b.total !==
-                a.total
+                voteDifference !==
+                0
             ) {
 
-                return (
-                    b.total -
-                    a.total
-                );
+                return voteDifference;
 
             }
 
-
-            /*
-             * Jika seri,
-             * gunakan nomor urut.
-             */
 
             const nomorA =
-                toNumber(
+                Number(
                     a.nomor_urut
-                );
+                ) || 999999;
+
 
             const nomorB =
-                toNumber(
+                Number(
                     b.nomor_urut
-                );
+                ) || 999999;
 
 
-            if (
-                nomorA !==
-                nomorB
-            ) {
-
-                return (
-                    nomorA -
-                    nomorB
-                );
-
-            }
-
-
-            /*
-             * Fallback calon_id.
-             */
-
-            return String(
-                a.calon_id
-            ).localeCompare(
-                String(
-                    b.calon_id
-                )
-            );
+            return nomorA -
+                nomorB;
 
         }
     );
 
 
-    /* --------------------------------------------------------
-       RANK
-       -------------------------------------------------------- */
-
-    results.forEach(
-        function(
-            item,
-            index
-        ) {
-
-            item.rank =
-                index + 1;
-
-        }
-    );
-
-
-    /* --------------------------------------------------------
-       PERSENTASE
-       -------------------------------------------------------- */
+    /*
+     * ==========================================================
+     * TOTAL SUARA SAH
+     * ==========================================================
+     *
+     * Suara sah =
+     * online + offline.
+     */
 
     const totalVotes =
         results.reduce(
@@ -1821,7 +1428,9 @@ function combineResults(
 
                 return (
                     total +
-                    item.total
+                    Number(
+                        item.total || 0
+                    )
                 );
 
             },
@@ -1829,8 +1438,21 @@ function combineResults(
         );
 
 
+    /*
+     * ==========================================================
+     * PERSENTASE + RANK
+     * ==========================================================
+     */
+
     results.forEach(
-        function(item) {
+        function(
+            item,
+            index
+        ) {
+
+            item.rank =
+                index + 1;
+
 
             item.percentage =
                 percentage(
@@ -1847,16 +1469,22 @@ function combineResults(
 }
 
 
-/* ============================================================
-   SUMMARY
-   ============================================================ */
+/* ================================================================
+   CALCULATE SUMMARY
+   ================================================================ */
 
 function calculateSummary(
     results,
     offline
 ) {
 
-    const online =
+    /*
+     * ==========================================================
+     * TOTAL ONLINE
+     * ==========================================================
+     */
+
+    const totalOnline =
         results.reduce(
             function(
                 total,
@@ -1865,8 +1493,8 @@ function calculateSummary(
 
                 return (
                     total +
-                    toNumber(
-                        item.online
+                    Number(
+                        item.online || 0
                     )
                 );
 
@@ -1875,7 +1503,13 @@ function calculateSummary(
         );
 
 
-    const offlineTotal =
+    /*
+     * ==========================================================
+     * TOTAL OFFLINE
+     * ==========================================================
+     */
+
+    const totalOffline =
         results.reduce(
             function(
                 total,
@@ -1884,8 +1518,8 @@ function calculateSummary(
 
                 return (
                     total +
-                    toNumber(
-                        item.offline
+                    Number(
+                        item.offline || 0
                     )
                 );
 
@@ -1894,7 +1528,13 @@ function calculateSummary(
         );
 
 
-    const invalid =
+    /*
+     * ==========================================================
+     * TOTAL TIDAK SAH
+     * ==========================================================
+     */
+
+    const totalInvalid =
         offline.reduce(
             function(
                 total,
@@ -1903,8 +1543,8 @@ function calculateSummary(
 
                 return (
                     total +
-                    toNumber(
-                        item.tidak_sah
+                    Number(
+                        item.tidak_sah || 0
                     )
                 );
 
@@ -1913,94 +1553,237 @@ function calculateSummary(
         );
 
 
-    const total =
-        online +
-        offlineTotal;
+    /*
+     * ==========================================================
+     * TOTAL SUARA SAH
+     * ==========================================================
+     */
+
+    const totalValid =
+        totalOnline +
+        totalOffline;
+
+
+    /*
+     * ==========================================================
+     * TOTAL SEMUA
+     * ==========================================================
+     */
+
+    const totalAll =
+        totalValid +
+        totalInvalid;
 
 
     return {
 
         online:
-            online,
+            totalOnline,
 
         offline:
-            offlineTotal,
+            totalOffline,
 
-        total:
-            total,
+        valid:
+            totalValid,
 
         invalid:
-            invalid
+            totalInvalid,
+
+        total:
+            totalAll
 
     };
 
 }
 
 
-/* ============================================================
-   RENDER SUMMARY
-   ============================================================ */
+/* ================================================================
+   SET LOADING
+   ================================================================ */
 
-function renderSummary(
-    summary
+function setLoading(
+    loading
 ) {
 
     if (
-        onlineTotal
+        loadingIndicator
     ) {
 
-        onlineTotal.textContent =
-            formatNumber(
-                summary.online
-            );
-
-    }
-    if (
-        offlineTotal
-    ) {
-        offlineTotal.textContent =
-            formatNumber(
-                summary.offline
-            );
-    }
-    if (
-        grandTotal
-    ) {
-
-        grandTotal.textContent =
-            formatNumber(
-                summary.total
-            );
-    }
-    if (
-        headingTotal
-    ) {
-
-        headingTotal.textContent =
-            formatNumber(
-                summary.total
-            );
+        loadingIndicator.classList.toggle(
+            "hidden",
+            !loading
+        );
 
     }
 
 
     if (
-        invalidTotal
+        refreshButton
     ) {
 
-        invalidTotal.textContent =
-            formatNumber(
-                summary.invalid
-            );
+        refreshButton.disabled =
+            loading;
 
     }
 
 }
 
 
-/* ============================================================
+/* ================================================================
+   CONNECTION STATUS
+   ================================================================ */
+
+function setConnectionStatus(
+    type,
+    text
+) {
+
+    if (
+        !connectionStatus
+    ) {
+
+        return;
+
+    }
+
+
+    connectionStatus.textContent =
+        text;
+
+
+    connectionStatus.classList.remove(
+        "online",
+        "loading",
+        "error"
+    );
+
+
+    if (
+        type
+    ) {
+
+        connectionStatus.classList.add(
+            type
+        );
+
+    }
+
+}
+
+
+/* ================================================================
+   TOAST
+   ================================================================ */
+
+function showToast(
+    message
+) {
+
+    /*
+     * Gunakan toast project jika tersedia.
+     */
+
+    if (
+        window.__quickCountToast
+    ) {
+
+        window.__quickCountToast(
+            message
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Toast existing.
+     */
+
+    const existing =
+        document.getElementById(
+            "toast"
+        );
+
+
+    if (
+        existing
+    ) {
+
+        existing.textContent =
+            message;
+
+
+        existing.classList.add(
+            "show"
+        );
+
+
+        setTimeout(
+            function() {
+
+                existing.classList.remove(
+                    "show"
+                );
+
+            },
+            2500
+        );
+
+
+        return;
+
+    }
+
+
+    /*
+     * Fallback console.
+     */
+
+    console.log(
+        "[QUICK COUNT]",
+        message
+    );
+
+}
+
+
+/* ================================================================
+   RENDER SUMMARY
+   ================================================================ */
+
+function renderSummary(summary) {
+    const onlineEl = document.getElementById("onlineTotal");
+    const offlineEl = document.getElementById("offlineTotal");
+    const grandEl = document.getElementById("grandTotal");
+    const invalidEl = document.getElementById("invalidTotal");
+    const headingEl = document.getElementById("headingTotal");
+
+    if (onlineEl) {
+        onlineEl.textContent = formatNumber(summary.online);
+    }
+
+    if (offlineEl) {
+        offlineEl.textContent = formatNumber(summary.offline);
+    }
+
+    if (grandEl) {
+        grandEl.textContent = formatNumber(summary.valid);
+    }
+
+    if (invalidEl) {
+        invalidEl.textContent = formatNumber(summary.invalid);
+    }
+
+    if (headingEl) {
+        headingEl.textContent = formatNumber(summary.valid);
+    }
+}
+
+
+/* ================================================================
    RENDER WINNER
-   ============================================================ */
+   ================================================================ */
 
 function renderWinner(
     results
@@ -2080,9 +1863,9 @@ function renderWinner(
 }
 
 
-/* ============================================================
+/* ================================================================
    RENDER RESULTS
-   ============================================================ */
+   ================================================================ */
 
 function renderResults(
     results
@@ -2102,7 +1885,6 @@ function renderResults(
     ) {
 
         resultsContainer.innerHTML = `
-
             <div class="empty-state">
 
                 <div class="empty-state-icon">
@@ -2118,13 +1900,16 @@ function renderResults(
                 </span>
 
             </div>
-
         `;
 
         return;
 
     }
 
+
+    /*
+     * Total suara sah.
+     */
 
     const totalVotes =
         results.reduce(
@@ -2135,13 +1920,19 @@ function renderResults(
 
                 return (
                     total +
-                    item.total
+                    Number(
+                        item.total || 0
+                    )
                 );
 
             },
             0
         );
 
+
+    /*
+     * Render kandidat.
+     */
 
     resultsContainer.innerHTML =
         results.map(
@@ -2170,6 +1961,10 @@ function renderResults(
                     );
 
 
+                /*
+                 * Nomor calon.
+                 */
+
                 let nomor =
                     item.nomor_urut;
 
@@ -2197,7 +1992,6 @@ function renderResults(
 
 
                 return `
-
                     <article
                         class="result-item ${rankClass}"
                     >
@@ -2248,7 +2042,9 @@ function renderResults(
                                 </span>
 
                                 <span class="progress-percentage">
-                                    ${item.percentage.toFixed(1)}%
+                                    ${Number(
+                                        item.percentage || 0
+                                    ).toFixed(1)}%
                                 </span>
 
                             </div>
@@ -2279,7 +2075,6 @@ function renderResults(
                         </div>
 
                     </article>
-
                 `;
 
             }
@@ -2289,9 +2084,9 @@ function renderResults(
 }
 
 
-/* ============================================================
+/* ================================================================
    RENDER TABLE
-   ============================================================ */
+   ================================================================ */
 
 function renderTable(
     results
@@ -2311,7 +2106,6 @@ function renderTable(
     ) {
 
         detailTableBody.innerHTML = `
-
             <tr>
 
                 <td
@@ -2322,7 +2116,6 @@ function renderTable(
                 </td>
 
             </tr>
-
         `;
 
         return;
@@ -2335,7 +2128,6 @@ function renderTable(
             function(item) {
 
                 return `
-
                     <tr>
 
                         <td class="table-rank">
@@ -2377,11 +2169,12 @@ function renderTable(
 
 
                         <td class="table-percentage">
-                            ${item.percentage.toFixed(1)}%
+                            ${Number(
+                                item.percentage || 0
+                            ).toFixed(1)}%
                         </td>
 
                     </tr>
-
                 `;
 
             }
@@ -2391,9 +2184,9 @@ function renderTable(
 }
 
 
-/* ============================================================
-   ELECTION INFO
-   ============================================================ */
+/* ================================================================
+   LOAD ELECTION INFO
+   ================================================================ */
 
 async function loadElectionInfo() {
 
@@ -2444,7 +2237,9 @@ async function loadElectionInfo() {
 
         }
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.warn(
             "Gagal memuat config pemilihan:",
@@ -2456,9 +2251,9 @@ async function loadElectionInfo() {
 }
 
 
-/* ============================================================
+/* ================================================================
    UPDATE LAST UPDATE
-   ============================================================ */
+   ================================================================ */
 
 function updateLastUpdate() {
 
@@ -2502,9 +2297,9 @@ function updateLastUpdate() {
 }
 
 
-/* ============================================================
+/* ================================================================
    OFFLINE STATUS
-   ============================================================ */
+   ================================================================ */
 
 function setOfflineStatus(
     status
@@ -2525,9 +2320,9 @@ function setOfflineStatus(
 }
 
 
-/* ============================================================
+/* ================================================================
    MAIN QUICK COUNT
-   ============================================================ */
+   ================================================================ */
 
 async function loadQuickCount(
     showNotification = false
@@ -2542,13 +2337,17 @@ async function loadQuickCount(
         isLoading
     ) {
 
-        console.warn(
-            "Quick Count masih memuat. Request baru dibatalkan."
+        console.log(
+            "Quick Count masih memuat data sebelumnya."
         );
 
         return;
 
     }
+
+
+    isLoading =
+        true;
 
 
     setLoading(
@@ -2562,161 +2361,255 @@ async function loadQuickCount(
     );
 
 
+    console.log(
+        "===================================="
+    );
+
+
+    console.log(
+        "MEMUAT QUICK COUNT..."
+    );
+
+
     /*
-     * Jalankan ONLINE dan OFFLINE
-     * secara terpisah.
-     *
-     * Jangan menggunakan Promise.all biasa,
-     * karena jika salah satu gagal,
-     * semuanya dianggap gagal.
+     * ==========================================================
+     * ONLINE + OFFLINE BERSAMAAN
+     * ==========================================================
      */
 
-    let onlineResponse =
-        null;
+    const [
+        onlineResult,
+        offlineResult
+    ] =
+        await Promise.allSettled(
+            [
+                loadOnlineResults(),
+                loadOfflineResults()
+            ]
+        );
 
-    let offlineRows =
-        null;
+
+    let onlineSuccess =
+        false;
+
+
+    let offlineSuccess =
+        false;
+
 
     let onlineError =
         null;
+
 
     let offlineError =
         null;
 
 
-    try {
+    /* ==========================================================
+       PROSES ONLINE
+       ========================================================== */
 
-        onlineResponse =
-            await loadOnlineResults();
+    if (
+        onlineResult.status ===
+        "fulfilled"
+    ) {
 
-    } catch (error) {
+        const onlinePayload =
+            onlineResult.value;
+
+
+        /*
+         * Pastikan response memiliki array.
+         */
+
+        const rows =
+            onlinePayload &&
+            Array.isArray(
+                onlinePayload.results
+            )
+                ? onlinePayload.results
+                : null;
+
+
+        if (
+            rows !== null
+        ) {
+
+            const normalized =
+                normalizeOnline(
+                    rows
+                );
+
+
+            /*
+             * Request dianggap berhasil
+             * meskipun array kosong.
+             *
+             * Ini penting agar data online
+             * yang memang kosong tidak dianggap error.
+             */
+
+            onlineResults =
+                normalized;
+
+
+            onlineSuccess =
+                true;
+
+
+            console.log(
+                "ONLINE BERHASIL:",
+                {
+                    authenticated:
+                        Boolean(
+                            onlinePayload.authenticated
+                        ),
+
+                    jumlahData:
+                        onlineResults.length,
+
+                    data:
+                        onlineResults
+                }
+            );
+
+        } else {
+
+            /*
+             * Response tidak sesuai format.
+             */
+
+            onlineSuccess =
+                false;
+
+
+            onlineError =
+                new Error(
+                    "Format response ONLINE tidak valid."
+                );
+
+
+            console.error(
+                "ONLINE FORMAT ERROR:",
+                onlinePayload
+            );
+
+        }
+
+    } else {
 
         onlineError =
-            error;
+            onlineResult.reason;
+
 
         console.error(
             "ONLINE ERROR:",
-            error
+            onlineError
+        );
+
+
+        /*
+         * ======================================================
+         * DATA ONLINE LAMA DIPERTAHANKAN
+         * ======================================================
+         */
+
+        console.warn(
+            "Data ONLINE sebelumnya tetap digunakan."
         );
 
     }
 
 
-    try {
+    /* ==========================================================
+       PROSES OFFLINE
+       ========================================================== */
 
-        offlineRows =
-            await loadOfflineResults();
+    if (
+        offlineResult.status ===
+        "fulfilled"
+    ) {
 
-    } catch (error) {
+        const rows =
+            offlineResult.value;
+
+
+        if (
+            Array.isArray(
+                rows
+            )
+        ) {
+
+            const normalized =
+                normalizeOffline(
+                    rows
+                );
+
+
+            offlineResults =
+                normalized;
+
+
+            offlineSuccess =
+                true;
+
+
+            console.log(
+                "OFFLINE BERHASIL:",
+                {
+                    jumlahData:
+                        offlineResults.length,
+
+                    data:
+                        offlineResults
+                }
+            );
+
+        } else {
+
+            offlineSuccess =
+                false;
+
+
+            offlineError =
+                new Error(
+                    "Format response OFFLINE tidak valid."
+                );
+
+
+            console.error(
+                "OFFLINE FORMAT ERROR:",
+                rows
+            );
+
+        }
+
+    } else {
 
         offlineError =
-            error;
+            offlineResult.reason;
+
 
         console.error(
             "OFFLINE ERROR:",
-            error
-        );
-
-    }
-
-
-    /*
-     * --------------------------------------------------------
-     * NORMALIZE ONLINE
-     * --------------------------------------------------------
-     */
-
-    if (
-        onlineResponse
-    ) {
-
-        onlineResults =
-            normalizeOnline(
-                onlineResponse.results
-            );
-
-    }
-
-
-    /*
-     * --------------------------------------------------------
-     * NORMALIZE OFFLINE
-     * --------------------------------------------------------
-     */
-
-    if (
-        offlineRows
-    ) {
-
-        offlineResults =
-            normalizeOffline(
-                offlineRows
-            );
-
-    }
-
-
-    /*
-     * --------------------------------------------------------
-     * Tentukan apakah ada data baru.
-     * --------------------------------------------------------
-     */
-
-    const onlineSuccess =
-        !onlineError &&
-        Boolean(
-            onlineResponse
+            offlineError
         );
 
 
-    const offlineSuccess =
-        !offlineError &&
-        Array.isArray(
-            offlineRows
-        );
-
-
-    /*
-     * --------------------------------------------------------
-     * Jika ONLINE gagal, pertahankan data ONLINE lama.
-     * --------------------------------------------------------
-     */
-
-    if (
-        onlineError &&
-        onlineResults.length === 0
-    ) {
+        /*
+         * Data OFFLINE lama dipertahankan.
+         */
 
         console.warn(
-            "Tidak ada data ONLINE yang dapat digunakan."
+            "Data OFFLINE sebelumnya tetap digunakan."
         );
 
     }
 
 
-    /*
-     * --------------------------------------------------------
-     * Jika OFFLINE gagal, pertahankan data OFFLINE lama.
-     * --------------------------------------------------------
-     */
-
-    if (
-        offlineError &&
-        offlineResults.length === 0
-    ) {
-
-        console.warn(
-            "Tidak ada data OFFLINE yang dapat digunakan."
-        );
-
-    }
-
-
-    /*
-     * --------------------------------------------------------
-     * Gabungkan.
-     * --------------------------------------------------------
-     */
+    /* ================================================================
+       COMBINE
+       ================================================================ */
 
     combinedResults =
         combineResults(
@@ -2725,11 +2618,15 @@ async function loadQuickCount(
         );
 
 
-    /*
-     * --------------------------------------------------------
-     * Summary.
-     * --------------------------------------------------------
-     */
+    console.log(
+        "HASIL GABUNGAN:",
+        combinedResults
+    );
+
+
+    /* ================================================================
+       SUMMARY
+       ================================================================ */
 
     const summary =
         calculateSummary(
@@ -2738,37 +2635,51 @@ async function loadQuickCount(
         );
 
 
-    /*
-     * --------------------------------------------------------
-     * Render.
-     * --------------------------------------------------------
-     */
+    console.log(
+        "HASIL SUMMARY:",
+        summary
+    );
+
+
+    /* ================================================================
+       RENDER SUMMARY
+       ================================================================ */
 
     renderSummary(
         summary
     );
 
 
+    /* ================================================================
+       RENDER WINNER
+       ================================================================ */
+
     renderWinner(
         combinedResults
     );
 
+
+    /* ================================================================
+       RENDER RESULTS
+       ================================================================ */
 
     renderResults(
         combinedResults
     );
 
 
+    /* ================================================================
+       RENDER TABLE
+       ================================================================ */
+
     renderTable(
         combinedResults
     );
 
 
-    /*
-     * --------------------------------------------------------
-     * STATUS SUMBER OFFLINE
-     * --------------------------------------------------------
-     */
+    /* ================================================================
+       STATUS OFFLINE
+       ================================================================ */
 
     if (
         offlineSuccess
@@ -2795,11 +2706,9 @@ async function loadQuickCount(
     }
 
 
-    /*
-     * --------------------------------------------------------
-     * STATUS CONNECTION
-     * --------------------------------------------------------
-     */
+    /* ================================================================
+       STATUS CONNECTION
+       ================================================================ */
 
     if (
         onlineSuccess &&
@@ -2848,11 +2757,9 @@ async function loadQuickCount(
     }
 
 
-    /*
-     * --------------------------------------------------------
-     * UPDATE TIME
-     * --------------------------------------------------------
-     */
+    /* ================================================================
+       UPDATE LAST UPDATE
+       ================================================================ */
 
     if (
         onlineSuccess ||
@@ -2864,11 +2771,9 @@ async function loadQuickCount(
     }
 
 
-    /*
-     * --------------------------------------------------------
-     * NOTIFICATION
-     * --------------------------------------------------------
-     */
+    /* ================================================================
+       NOTIFICATION
+       ================================================================ */
 
     if (
         showNotification
@@ -2908,6 +2813,12 @@ async function loadQuickCount(
         }
 
     }
+
+
+    /* ================================================================
+       DEBUG
+       ================================================================ */
+
     console.log(
         "QUICK COUNT UPDATED",
         {
@@ -2934,27 +2845,33 @@ async function loadQuickCount(
 
             summary:
                 summary
-
         }
     );
 
 
-    /*
-     * --------------------------------------------------------
-     * Selesai loading.
-     * --------------------------------------------------------
-     */
+    /* ================================================================
+       SELESAI
+       ================================================================ */
+
+    isLoading =
+        false;
+
 
     setLoading(
         false
     );
 
+
+    console.log(
+        "===================================="
+    );
+
 }
 
 
-/* ============================================================
+/* ================================================================
    AUTO REFRESH
-   ============================================================ */
+   ================================================================ */
 
 function startAutoRefresh() {
 
@@ -2974,31 +2891,42 @@ function startAutoRefresh() {
 
 
     /*
-     * Buat timer baru.
+     * Timer baru.
+     *
+     * Setiap 5 detik.
      */
 
     autoRefreshTimer =
         setInterval(
             function() {
 
-                /*
-                 * Refresh diam-diam.
-                 */
+                if (
+                    !isLoading
+                ) {
 
-                loadQuickCount(
-                    false
-                );
+                    loadQuickCount(
+                        false
+                    );
+
+                }
 
             },
             AUTO_REFRESH_INTERVAL
         );
 
+
+    console.log(
+        "AUTO REFRESH AKTIF:",
+        AUTO_REFRESH_INTERVAL / 1000,
+        "detik"
+    );
+
 }
 
 
-/* ============================================================
+/* ================================================================
    STOP AUTO REFRESH
-   ============================================================ */
+   ================================================================ */
 
 function stopAutoRefresh() {
 
@@ -3010,17 +2938,23 @@ function stopAutoRefresh() {
             autoRefreshTimer
         );
 
+
         autoRefreshTimer =
             null;
+
+
+        console.log(
+            "AUTO REFRESH DIHENTIKAN."
+        );
 
     }
 
 }
 
 
-/* ============================================================
+/* ================================================================
    REFRESH BUTTON
-   ============================================================ */
+   ================================================================ */
 
 if (
     refreshButton
@@ -3040,18 +2974,9 @@ if (
 }
 
 
-/* ============================================================
+/* ================================================================
    PAGE VISIBILITY
-   ============================================================ */
-
-
-/*
- * Ketika tab kembali aktif,
- * lakukan refresh.
- *
- * Ini berguna kalau halaman ditinggal
- * beberapa menit.
- */
+   ================================================================ */
 
 document.addEventListener(
     "visibilitychange",
@@ -3061,11 +2986,6 @@ document.addEventListener(
             document.visibilityState ===
             "visible"
         ) {
-
-            /*
-             * Hanya refresh jika
-             * tidak sedang loading.
-             */
 
             if (
                 !isLoading
@@ -3083,9 +3003,9 @@ document.addEventListener(
 );
 
 
-/* ============================================================
+/* ================================================================
    INITIALIZATION
-   ============================================================ */
+   ================================================================ */
 
 async function init() {
 
@@ -3093,23 +3013,35 @@ async function init() {
         "===================================="
     );
 
+
     console.log(
         "E-VOTING RW 04 - QUICK COUNT"
     );
+
 
     console.log(
         "Quick Count initialization..."
     );
 
+
     console.log(
-        "API:",
+        "ONLINE API:",
         API_URL
     );
 
+
     console.log(
-        "OFFLINE CSV:",
-        OFFLINE_CSV_URL
+        "OFFLINE API:",
+        OFFLINE_API_URL
     );
+
+
+    console.log(
+        "AUTO REFRESH:",
+        AUTO_REFRESH_INTERVAL / 1000,
+        "detik"
+    );
+
 
     console.log(
         "===================================="
@@ -3143,22 +3075,24 @@ async function init() {
 }
 
 
-/* ============================================================
+/* ================================================================
    GLOBAL ACCESS
-   ============================================================ */
-
-
-/*
- * Supaya tombol "Coba Lagi"
- * dari HTML inline bisa memanggil fungsi.
- */
+   ================================================================ */
 
 window.loadQuickCount =
     loadQuickCount;
 
 
-/*
- * Jalankan aplikasi.
- */
+window.startAutoRefresh =
+    startAutoRefresh;
+
+
+window.stopAutoRefresh =
+    stopAutoRefresh;
+
+
+/* ================================================================
+   START
+   ================================================================ */
 
 init();
