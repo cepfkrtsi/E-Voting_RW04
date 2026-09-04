@@ -1116,175 +1116,87 @@ function renderCandidates() {
    NORMALIZE IMAGE URL
 ===================================================== */
 
-function normalizeImageUrl(
-    url
-) {
+function normalizeImageUrl(url) {
 
     if (!url) {
-
-        return createPlaceholderImage(
-            "00"
-        );
-
+        return createPlaceholderImage("00");
     }
 
-
-    let value =
-        String(url).trim();
-
+    let value = String(url).trim();
 
     if (!value) {
-
-        return createPlaceholderImage(
-            "00"
-        );
-
+        return createPlaceholderImage("00");
     }
 
+    // Google Drive /file/d/FILE_ID/view
+    let match = value.match(
+        /drive\.google\.com\/file\/d\/([^/?#]+)/
+    );
 
-    /* =========================================
-       GOOGLE DRIVE FILE / VIEW
-
-       /file/d/FILE_ID/view
-    ========================================= */
-
-    let match =
-        value.match(
-            /drive\.google\.com\/file\/d\/([^/?#]+)/
-        );
-
-
-    if (
-        match &&
-        match[1]
-    ) {
-
+    if (match && match[1]) {
         return (
             "https://drive.google.com/thumbnail?id=" +
-            encodeURIComponent(
-                match[1]
-            ) +
+            encodeURIComponent(match[1]) +
             "&sz=w1000"
         );
-
     }
 
+    // Google Drive /thumbnail?id=FILE_ID
+    match = value.match(
+        /drive\.google\.com\/thumbnail\?[^#]*id=([^&#]+)/
+    );
 
-    /* =========================================
-       GOOGLE DRIVE THUMBNAIL
-
-       /thumbnail?id=FILE_ID
-    ========================================= */
-
-    match =
-        value.match(
-            /drive\.google\.com\/thumbnail\?[^#]*id=([^&#]+)/
-        );
-
-
-    if (
-        match &&
-        match[1]
-    ) {
-
+    if (match && match[1]) {
         return (
             "https://drive.google.com/thumbnail?id=" +
-            encodeURIComponent(
-                match[1]
-            ) +
+            encodeURIComponent(match[1]) +
             "&sz=w1000"
         );
-
     }
 
+    // Google Drive /open?id=FILE_ID
+    match = value.match(
+        /drive\.google\.com\/open\?[^#]*id=([^&#]+)/
+    );
 
-    /* =========================================
-       GOOGLE DRIVE OPEN
-
-       /open?id=FILE_ID
-    ========================================= */
-
-    match =
-        value.match(
-            /drive\.google\.com\/open\?[^#]*id=([^&#]+)/
-        );
-
-
-    if (
-        match &&
-        match[1]
-    ) {
-
+    if (match && match[1]) {
         return (
             "https://drive.google.com/thumbnail?id=" +
-            encodeURIComponent(
-                match[1]
-            ) +
+            encodeURIComponent(match[1]) +
             "&sz=w1000"
         );
-
     }
 
+    // Google Drive /uc?id=FILE_ID
+    match = value.match(
+        /drive\.google\.com\/uc\?[^#]*id=([^&#]+)/
+    );
 
-    /* =========================================
-       GOOGLE DRIVE UC
-
-       /uc?id=FILE_ID
-    ========================================= */
-
-    match =
-        value.match(
-            /drive\.google\.com\/uc\?[^#]*id=([^&#]+)/
-        );
-
-
-    if (
-        match &&
-        match[1]
-    ) {
-
+    if (match && match[1]) {
         return (
             "https://drive.google.com/thumbnail?id=" +
-            encodeURIComponent(
-                match[1]
-            ) +
+            encodeURIComponent(match[1]) +
             "&sz=w1000"
         );
-
     }
 
-
-    /* =========================================
-       GOOGLE DRIVE URL DENGAN ID
-    ========================================= */
-
+    // Google Drive URL dengan parameter id
     if (
-        value.includes(
-            "drive.google.com"
-        ) &&
+        value.includes("drive.google.com") &&
         value.includes("id=")
     ) {
-
         try {
 
-            const parsed =
-                new URL(value);
+            const parsed = new URL(value);
 
-            const id =
-                parsed.searchParams.get(
-                    "id"
-                );
+            const id = parsed.searchParams.get("id");
 
             if (id) {
-
                 return (
                     "https://drive.google.com/thumbnail?id=" +
-                    encodeURIComponent(
-                        id
-                    ) +
+                    encodeURIComponent(id) +
                     "&sz=w1000"
                 );
-
             }
 
         } catch (error) {
@@ -1295,16 +1207,10 @@ function normalizeImageUrl(
             );
 
         }
-
     }
 
-
-    /* =========================================
-       URL GAMBAR BIASA
-    ========================================= */
-
+    // URL gambar biasa
     return value;
-
 }
 
 
